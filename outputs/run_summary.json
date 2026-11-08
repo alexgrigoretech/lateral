@@ -1,7 +1,7 @@
 {
-  "run_id": "20261108T144408Zb82163",
-  "started_at": "2026-11-08T16:44:08.058147+02:00",
-  "finished_at": "2026-11-08T16:44:19.896114+02:00",
+  "run_id": "20261108T151747Z95f28a",
+  "started_at": "2026-11-08T17:17:48.002904+02:00",
+  "finished_at": "2026-11-08T17:18:01.193286+02:00",
   "status": "success",
   "counts": {
     "marts.dim_country": 9,
@@ -12,8 +12,8 @@
     "raw.country_rows": 9,
     "raw.indicator_meta_rows": 4,
     "raw.observation_rows": 252,
-    "raw.page_sightings": 36,
-    "raw.runs": 4,
+    "raw.page_sightings": 54,
+    "raw.runs": 6,
     "reporting.rpt_completeness_by_country_indicator": 36,
     "reporting.rpt_income_group_by_year": 84,
     "reporting.rpt_latest_available_per_country": 36,
@@ -24,5 +24,5 @@
     "staging.stg_indicators": 4,
     "staging.stg_observations": 252
   },
-  "exported_at": "2026-11-08T14:44:20.294154+00:00"
+  "exported_at": "2026-11-08T15:18:01.630328+00:00"
 }
