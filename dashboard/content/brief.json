@@ -1,0 +1,1402 @@
+{
+  "sections": [
+    {
+      "number": 1,
+      "title": "Data ingestion",
+      "intro": "Retrieve the data from the public API in a way that is traceable, repeatable and safe to re-run."
+    },
+    {
+      "number": 2,
+      "title": "Data model and transformations",
+      "intro": "Keep raw apart from clean, make the grain explicit, and let configuration drive scope."
+    },
+    {
+      "number": 3,
+      "title": "Analytics outputs",
+      "intro": "A reproducible reporting layer that answers the four questions, plus the optional dashboard."
+    },
+    {
+      "number": 4,
+      "title": "Data quality and testing",
+      "intro": "Automated checks that run offline and give confidence in correctness and reprocessing."
+    },
+    {
+      "number": 5,
+      "title": "Production design note",
+      "intro": "How the local design would be operated, monitored and mapped onto a cloud warehouse."
+    },
+    {
+      "number": 6,
+      "title": "Deliverable",
+      "intro": "Runs from the README, documented, with sample outputs and a git history."
+    }
+  ],
+  "subsections": [
+    {
+      "id": "1-1",
+      "section": 1,
+      "number": "1.1",
+      "title": "Retrieve metadata and observations",
+      "status": "met",
+      "requirement": "Retrieve country metadata and the required indicator observations from the API.",
+      "summary": "One paged request per entity: the metadata of all nine configured countries, the observations of each indicator across all countries and years, and the metadata of each indicator. Every row lands in a raw table keyed by the page it came from.",
+      "details": [
+        "The client builds each request URL from the configuration: the country list joined with semicolons, the indicator code and the date range 2018:2024. The base URL, page size, timeout and retry budget come from config/pipeline.yaml.",
+        "Rows are exploded into raw.country_rows, raw.indicator_meta_rows and raw.observation_rows with the source strings preserved. Typing happens later, in staging, so the raw layer stays a faithful copy of what the API returned.",
+        "The live run of 2026-11-08 fetched nine pages: one for countries, four for indicator metadata and four for observations, 252 observation rows in total."
+      ],
+      "snippets": [
+        {
+          "file": "wb_pipeline/client.py",
+          "start": 152,
+          "end": 160,
+          "lang": "python",
+          "caption": "The three entity fetches, each a thin wrapper over the paged fetch."
+        },
+        {
+          "file": "wb_pipeline/raw.py",
+          "start": 92,
+          "end": 119,
+          "lang": "python",
+          "caption": "Rows exploded per entity with page_id and row_index as provenance."
+        }
+      ],
+      "diagrams": [
+        "flow"
+      ],
+      "decisions": [
+        "D6"
+      ],
+      "live": [
+        {
+          "href": "/",
+          "label": "Overview with the run counts"
+        },
+        {
+          "href": "/country/USA",
+          "label": "Country drilldown with source lineage"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "make run",
+          "expect": "Prints a JSON summary with raw.api_pages 9, raw.observation_rows 252 and marts.fct_indicator_year 252."
+        }
+      ]
+    },
+    {
+      "id": "1-2",
+      "section": 1,
+      "number": "1.2",
+      "title": "Handle paging and API failures",
+      "status": "met",
+      "requirement": "Handle paging and API failures.",
+      "summary": "The client follows the pages field of the response header and refuses a request whose page count or total changes mid-way. Transient failures (429, 5xx, timeouts, connection errors) retry with exponential backoff and jitter; a 4xx or a malformed body fails fast.",
+      "details": [
+        "Paging: page 1 declares how many pages exist; the client walks them in order and compares pages and total on every page against the first one. A change means the source moved under the request, and the whole request fails rather than being patched.",
+        "Failures: max_retries 4 and backoff 1.0 from configuration give delays of 1, 2, 4 and 8 seconds plus up to a quarter of jitter. After the budget the client raises RetryExhausted; a non-retryable HTTP status raises WorldBankError at once.",
+        "A 200 whose body is not the two-element [metadata, rows] array is treated as an error, because the World Bank API answers bad parameters with a 200 and an error document."
+      ],
+      "snippets": [
+        {
+          "file": "wb_pipeline/client.py",
+          "start": 110,
+          "end": 130,
+          "lang": "python",
+          "caption": "Retry loop with backoff and jitter; 4xx fails fast."
+        },
+        {
+          "file": "wb_pipeline/client.py",
+          "start": 132,
+          "end": 150,
+          "lang": "python",
+          "caption": "Paged fetch with the pagination consistency check."
+        },
+        {
+          "file": "wb_pipeline/client.py",
+          "start": 82,
+          "end": 96,
+          "lang": "python",
+          "caption": "Response shape validation."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [
+        "D14"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": "WB_OFFLINE_GUARD=1 .venv/bin/python -m pytest -q tests/test_client.py",
+          "expect": "Passes the paging, retry, exhaustion and malformed body tests without the network."
+        }
+      ]
+    },
+    {
+      "id": "1-3",
+      "section": 1,
+      "number": "1.3",
+      "title": "Trace every value to its API response",
+      "status": "met",
+      "requirement": "Make every output value traceable to the API response it came from.",
+      "summary": "Each fact row carries source_page_id and source_row_index. The page id resolves to a raw.api_pages row holding the request URL, the pagination header, the source release date, the fetch time and the verbatim JSON body, and to a file on disk under data/raw/<run_id>/.",
+      "details": [
+        "The page id is the SHA-256 of the request URL concatenated with the SHA-256 of the body, so it identifies both what was asked and what came back.",
+        "The lineage survives every layer: staging keeps page_id and row_index, the fact selects them as source_page_id and source_row_index, and the country drilldown on this site shows them per value."
+      ],
+      "snippets": [
+        {
+          "file": "dbt/models/marts/fct_indicator_year.sql",
+          "start": 1,
+          "end": 21,
+          "lang": "sql",
+          "caption": "The fact carries source_page_id and source_row_index from the observation it matched."
+        },
+        {
+          "file": "wb_pipeline/client.py",
+          "start": 73,
+          "end": 75,
+          "lang": "python",
+          "caption": "The page_id definition."
+        }
+      ],
+      "diagrams": [
+        "pageid"
+      ],
+      "decisions": [
+        "D1",
+        "D6"
+      ],
+      "live": [
+        {
+          "href": "/country/USA",
+          "label": "Lineage table on the country page"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "duckdb data/warehouse.duckdb \"select f.country_iso3, f.year, f.value, p.request_url from marts.fct_indicator_year f join raw.api_pages p on p.page_id = f.source_page_id limit 3\"",
+          "expect": "Each value joins to the URL that produced it."
+        }
+      ]
+    },
+    {
+      "id": "1-4",
+      "section": 1,
+      "number": "1.4",
+      "title": "One documented command",
+      "status": "met",
+      "requirement": "Provide a single documented command that runs the pipeline locally from a clean checkout.",
+      "summary": "make setup then make run. Without make, python -m wb_pipeline run. A Dockerfile gives a third path. The command ingests, builds and tests the dbt models and exports CSV and Parquet in one go.",
+      "details": [
+        "The run subcommand chains ingest, transform and export and prints a JSON summary with the run id and the row count of every relation. Ingest, transform and export also exist as separate subcommands.",
+        "Configured paths resolve against the current working directory, which is the repository root when the documented commands are used. The offline demo overrides them with --duckdb-path and --export-dir."
+      ],
+      "snippets": [
+        {
+          "file": "Makefile",
+          "start": 1,
+          "end": 16,
+          "lang": "make",
+          "caption": "setup, run and test targets with the Windows and POSIX interpreter paths."
+        },
+        {
+          "file": "wb_pipeline/cli.py",
+          "start": 44,
+          "end": 56,
+          "lang": "python",
+          "caption": "CLI subcommands and the path overrides used by the offline demo."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [
+        "D12"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": "make setup && make run",
+          "expect": "Exits 0 and prints the run summary."
+        }
+      ]
+    },
+    {
+      "id": "1-5",
+      "section": 1,
+      "number": "1.5",
+      "title": "Re-runs create no duplicates",
+      "status": "met",
+      "requirement": "A re-run with unchanged source data must not create duplicate analytical records.",
+      "summary": "Idempotency is by content, not by run. An unchanged page hashes to the same page id, so a re-fetch appends one page_sightings row and nothing else. Marts rebuild from the configuration spine, so their cardinality is fixed by construction.",
+      "details": [
+        "Two live runs on 2026-11-08 left raw.api_pages at 9 rows, raw.observation_rows at 252 and marts.fct_indicator_year at 252, while raw.page_sightings went from 9 to 18.",
+        "Inserts use insert where not exists on the business key, inside one transaction per request, so a crash mid-request leaves nothing half visible.",
+        "The offline test runs the pipeline twice over the same fixtures and asserts the raw counts are unchanged and the sightings doubled."
+      ],
+      "snippets": [
+        {
+          "file": "wb_pipeline/raw.py",
+          "start": 62,
+          "end": 71,
+          "lang": "python",
+          "caption": "Insert-if-absent on the key columns."
+        },
+        {
+          "file": "wb_pipeline/raw.py",
+          "start": 74,
+          "end": 91,
+          "lang": "python",
+          "caption": "Page persisted once, one sighting per run, inside a transaction."
+        },
+        {
+          "file": "tests/test_idempotency.py",
+          "start": 18,
+          "end": 31,
+          "lang": "python",
+          "caption": "The idempotency test."
+        }
+      ],
+      "diagrams": [
+        "pageid"
+      ],
+      "decisions": [
+        "D1",
+        "D3",
+        "D14"
+      ],
+      "live": [
+        {
+          "href": "/",
+          "label": "Run summary on the overview"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "make run && make run",
+          "expect": "The second summary shows the same raw.api_pages and fct_indicator_year counts and raw.page_sightings increased by 9."
+        }
+      ]
+    },
+    {
+      "id": "1-6",
+      "section": 1,
+      "number": "1.6",
+      "title": "No cloud, paid or API accounts",
+      "status": "note",
+      "requirement": "Do not create cloud resources, paid accounts, or API accounts.",
+      "note": "Nothing was created on a cloud provider for this assessment and no paid or API account was opened. The pipeline needs only the public API, a local DuckDB file and dbt. This dashboard is the optional extra from section 3: it runs locally with npm run dev, and the hosted copy sits on the author's existing Vercel hobby account and existing domain, both older than the assessment.",
+      "summary": "The pipeline runs entirely on the public API and local files. No key, no account, no cloud service.",
+      "details": [
+        "DuckDB is an embedded database file; dbt-duckdb runs in process. The raw directory, the warehouse and the exports are plain files under the repository.",
+        "The dashboard reads the committed Parquet files through DuckDB inside Next.js route handlers and never calls the World Bank API."
+      ],
+      "snippets": [
+        {
+          "file": "config/pipeline.yaml",
+          "start": 12,
+          "end": 22,
+          "lang": "yaml",
+          "caption": "API settings and local paths; no credentials anywhere."
+        }
+      ],
+      "diagrams": [
+        "layers"
+      ],
+      "decisions": [
+        "D12",
+        "D13"
+      ],
+      "live": [
+        {
+          "href": "/about",
+          "label": "About page: stack and data delivery"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "grep -ri \"api_key\\|apikey\\|bearer\\|password\" config wb_pipeline dbt",
+          "expect": "No matches."
+        }
+      ]
+    },
+    {
+      "id": "2-1",
+      "section": 2,
+      "number": "2.1",
+      "title": "Raw kept apart from clean",
+      "status": "met",
+      "requirement": "Keep the raw source representation separate from cleaned and analytics-ready data.",
+      "summary": "Four schemas in one DuckDB file: raw (page and row tables are append-only), staging (typed views), marts (dimension and fact tables) and reporting (views). Raw rows keep the source strings and nullable doubles; typing and trimming happen in staging.",
+      "details": [
+        "Raw page and row tables are only ever inserted into. A correction from the source arrives as a new page with a new page id; the old page stays and staging picks the most recent sighting. raw.runs tracks the lifecycle of each run and raw.config_spine is replaced per run, because it represents configuration rather than source data.",
+        "A dbt macro maps each model folder to its schema so the separation is visible in the warehouse, not just in the repository layout."
+      ],
+      "snippets": [
+        {
+          "file": "dbt/models/staging/stg_observations.sql",
+          "start": 1,
+          "end": 21,
+          "lang": "sql",
+          "caption": "Staging: trim, cast, keep lineage, pick the latest sighting per business key."
+        },
+        {
+          "file": "dbt/macros/generate_schema_name.sql",
+          "start": 1,
+          "end": 2,
+          "lang": "sql",
+          "caption": "Folder to schema mapping."
+        }
+      ],
+      "diagrams": [
+        "layers"
+      ],
+      "decisions": [
+        "D6"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": "duckdb data/warehouse.duckdb \"select table_schema, count(*) from information_schema.tables group by 1 order by 1\"",
+          "expect": "Lists marts, raw, reporting and staging."
+        }
+      ]
+    },
+    {
+      "id": "2-2",
+      "section": 2,
+      "number": "2.2",
+      "title": "Grain, keys and relationships documented",
+      "status": "met",
+      "requirement": "Design and document the grain, business keys, and relationships of the final data model.",
+      "summary": "dim_country on country_iso3, dim_indicator on indicator_code, fct_indicator_year on country, indicator and year. The relationships are tested in dbt and drawn as an entity diagram in docs/data-model.md.",
+      "details": [
+        "The fact grain is the full configured spine: 9 countries by 4 indicators by 7 years, 252 rows, whether or not the API returned a value. Every reporting view states its own grain in the model documentation.",
+        "Relationship tests in dbt assert that every fact row references an existing country and indicator; uniqueness tests assert the business keys."
+      ],
+      "snippets": [
+        {
+          "file": "dbt/models/marts/schema.yml",
+          "start": 65,
+          "end": 111,
+          "lang": "yaml",
+          "caption": "Business key, relationships and accepted values of the fact, declared as dbt tests."
+        }
+      ],
+      "diagrams": [
+        "er"
+      ],
+      "decisions": [
+        "D2"
+      ],
+      "live": [
+        {
+          "href": "/about",
+          "label": "Model grains and business keys"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "cat docs/data-model.md",
+          "expect": "Sections Relationships and Fact status semantics, with the ER diagram."
+        }
+      ]
+    },
+    {
+      "id": "2-3",
+      "section": 2,
+      "number": "2.3",
+      "title": "Standardized for analysts",
+      "status": "met",
+      "requirement": "Standardize the data so analysts don't need to understand the source format.",
+      "summary": "Analysts query one fact table with typed columns, a status per row and labels from the dimensions. Missing data is a value of the status column, never a zero and never an absent row.",
+      "details": [
+        "Status is present when the API returned a number, null_value when it returned a record with a null, and not_returned when no record came back for that key. The value column is NULL in both missing cases.",
+        "Indicator labels and categories come from configuration, income groups and regions from the API metadata, so the reporting views need no knowledge of the source JSON."
+      ],
+      "snippets": [
+        {
+          "file": "dbt/models/marts/fct_indicator_year.sql",
+          "start": 6,
+          "end": 11,
+          "lang": "sql",
+          "caption": "Status derivation."
+        }
+      ],
+      "diagrams": [
+        "status"
+      ],
+      "decisions": [
+        "D7"
+      ],
+      "live": [
+        {
+          "href": "/missing",
+          "label": "Missing data by status"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "duckdb data/warehouse.duckdb \"select status, count(*) from marts.fct_indicator_year group by 1\"",
+          "expect": "present 252 on the current release; the synthetic sample shows the two missing statuses."
+        }
+      ]
+    },
+    {
+      "id": "2-4",
+      "section": 2,
+      "number": "2.4",
+      "title": "Extend by configuration",
+      "status": "met",
+      "requirement": "Make it possible to add a country or indicator through configuration or documented parameters without copying pipeline code.",
+      "summary": "Add an ISO3 code to countries or an entry to indicators in config/pipeline.yaml and run again. The spine, both dimensions, the fact and every report follow. A test proves a tenth country yields 280 fact rows with no code change.",
+      "details": [
+        "The configuration is validated before a run starts: malformed ISO3 codes, duplicate keys and unknown YAML keys fail early. Its hash is stored on the run and on every spine row, so a change of scope is auditable.",
+        "Income-group aggregates read the income level from the API metadata, so a new country lands in its group automatically."
+      ],
+      "snippets": [
+        {
+          "file": "config/pipeline.yaml",
+          "start": 1,
+          "end": 9,
+          "lang": "yaml",
+          "caption": "Countries, indicators and years are data, not code."
+        },
+        {
+          "file": "tests/test_idempotency.py",
+          "start": 34,
+          "end": 44,
+          "lang": "python",
+          "caption": "Tenth country test: 280 rows, 28 of them not_returned for the new country in the synthetic fixtures."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [
+        "D2"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": "WB_OFFLINE_GUARD=1 .venv/bin/python -m pytest -q tests/test_idempotency.py -k tenth",
+          "expect": "Passes."
+        }
+      ]
+    },
+    {
+      "id": "3-1",
+      "section": 3,
+      "number": "3.1",
+      "title": "Missing or incomplete combinations",
+      "status": "note",
+      "requirement": "Which country-indicator-year combinations are missing or incomplete?",
+      "note": "The current World Bank release (2026-10-08) has a value for every configured combination, so the live sample of this report is empty. outputs/samples-synthetic/ holds the same report from the synthetic fixtures with one null_value and one not_returned row, and this site shows the empty state with the explanation.",
+      "summary": "rpt_missing_data lists every non-present key with its reason. rpt_completeness_by_country_indicator gives per-pair coverage with first and last present year.",
+      "details": [
+        "Because the fact grain is the full spine, missing combinations are rows with a status, so the report is a filter rather than an anti-join against a guessed universe.",
+        "Completeness uses the configured year range as denominator and keeps null endpoints when a pair has no values at all."
+      ],
+      "snippets": [
+        {
+          "file": "dbt/models/reporting/rpt_missing_data.sql",
+          "start": 1,
+          "end": 10,
+          "lang": "sql",
+          "caption": "The missing-data view."
+        },
+        {
+          "file": "dbt/models/reporting/rpt_completeness_by_country_indicator.sql",
+          "start": 1,
+          "end": 10,
+          "lang": "sql",
+          "caption": "Completeness per country and indicator."
+        }
+      ],
+      "diagrams": [
+        "status"
+      ],
+      "decisions": [
+        "D2",
+        "D7"
+      ],
+      "live": [
+        {
+          "href": "/missing",
+          "label": "Missing data report"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "cat outputs/samples-synthetic/rpt_missing_data.csv",
+          "expect": "Two rows: BRA GDP per capita 2024 not_returned, ZAF life expectancy 2024 null_value."
+        }
+      ]
+    },
+    {
+      "id": "3-2",
+      "section": 3,
+      "number": "3.2",
+      "title": "Year-over-year change",
+      "status": "met",
+      "requirement": "What is the year-over-year change for each available indicator, handling missing or zero prior values?",
+      "summary": "rpt_yoy_change applies LAG over the full configured spine and labels every row: ok, first_year, prior_missing, prior_zero or current_missing. Percentage change is computed only when the status is ok.",
+      "details": [
+        "Because the window runs over the spine and not over present rows, a gap year yields prior_missing in the year after it instead of a silent comparison across the gap.",
+        "prior_zero keeps the absolute change and leaves the percentage null, which is the only honest answer to a zero base."
+      ],
+      "snippets": [
+        {
+          "file": "dbt/models/reporting/rpt_yoy_change.sql",
+          "start": 1,
+          "end": 34,
+          "lang": "sql",
+          "caption": "The view."
+        }
+      ],
+      "diagrams": [
+        "yoy"
+      ],
+      "decisions": [
+        "D10"
+      ],
+      "live": [
+        {
+          "href": "/yoy",
+          "label": "Year over year report"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "head -5 outputs/rpt_yoy_change.csv",
+          "expect": "Rows with yoy_status and a null pct_change on first_year."
+        }
+      ]
+    },
+    {
+      "id": "3-3",
+      "section": 3,
+      "number": "3.3",
+      "title": "Latest-year comparison",
+      "status": "met",
+      "requirement": "How do the selected countries compare for the latest available year of each indicator?",
+      "summary": "rpt_latest_year_comparison picks, per indicator, the latest year with at least one present value and lists every country for that year with rank and share of total. rpt_latest_available_per_country gives each country its own latest year.",
+      "details": [
+        "A country that lags shows up as missing in the common year rather than being compared at a different year. The per-country view answers the other question, which year is the newest for each country, and is labelled as not comparable across countries.",
+        "Share of total is computed for additive indicators only; a per-capita share would be meaningless."
+      ],
+      "snippets": [
+        {
+          "file": "dbt/models/reporting/rpt_latest_year_comparison.sql",
+          "start": 1,
+          "end": 20,
+          "lang": "sql",
+          "caption": "Common latest year, rank and share."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [
+        "D11"
+      ],
+      "live": [
+        {
+          "href": "/latest",
+          "label": "Latest year report"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "head -10 outputs/rpt_latest_year_comparison.csv",
+          "expect": "Nine countries per indicator in the same year, ranked."
+        }
+      ]
+    },
+    {
+      "id": "3-4",
+      "section": 3,
+      "number": "3.4",
+      "title": "Income groups by year",
+      "status": "met",
+      "requirement": "How do the indicators compare across income groups, by year?",
+      "summary": "rpt_income_group_by_year groups the configured countries by the income level from the API metadata and gives, per indicator and year, the sum for additive indicators, a population-weighted average for per-capita and life expectancy, plus mean, median, min, max and counts.",
+      "details": [
+        "The weighted average is null when any group member lacks a positive population weight, so a partial group never looks complete.",
+        "Income group is the current classification applied to every year; the API does not expose historical classification, and the model documentation says so."
+      ],
+      "snippets": [
+        {
+          "file": "dbt/models/reporting/rpt_income_group_by_year.sql",
+          "start": 1,
+          "end": 27,
+          "lang": "sql",
+          "caption": "The view with weighted and unweighted aggregates."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [
+        "D8",
+        "D9"
+      ],
+      "live": [
+        {
+          "href": "/income-groups",
+          "label": "Income groups report"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "head -5 outputs/rpt_income_group_by_year.csv",
+          "expect": "One row per indicator, income group and year."
+        }
+      ]
+    },
+    {
+      "id": "3-5",
+      "section": 3,
+      "number": "3.5",
+      "title": "Optional dashboard",
+      "status": "met",
+      "requirement": "Optional: an extra view, dashboard, or Power BI report. Not required.",
+      "summary": "This site. Next.js 16 with DuckDB querying the exported Parquet inside route handlers, seven pages and seven JSON routes, a country drilldown with lineage, and this walkthrough.",
+      "details": [
+        "The dashboard never calls the World Bank API. Its data is the pipeline's export, committed next to the app, so the site and the CSV samples always agree.",
+        "A health route reports the DuckDB version and the number of Parquet files, and the footer shows the pipeline run id."
+      ],
+      "snippets": [
+        {
+          "file": "dashboard/lib/db.ts",
+          "start": 28,
+          "end": 45,
+          "lang": "typescript",
+          "caption": "DuckDB opened in memory with one view per committed Parquet file."
+        }
+      ],
+      "diagrams": [
+        "flow"
+      ],
+      "decisions": [
+        "D13"
+      ],
+      "live": [
+        {
+          "href": "/",
+          "label": "Overview"
+        },
+        {
+          "href": "/api/health",
+          "label": "Health route"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "cd dashboard && npm run build && npm run start",
+          "expect": "Then npm run smoke exits 0."
+        }
+      ]
+    },
+    {
+      "id": "4-1",
+      "section": 4,
+      "number": "4.1",
+      "title": "Automated checks and tests",
+      "status": "met",
+      "requirement": "Implement automated data-quality checks and tests that give you confidence in correctness and safe reprocessing.",
+      "summary": "65 dbt tests run on every pipeline run: keys, relationships, accepted statuses, year bounds from configuration, positive population and GDP, life expectancy between 20 and 100, exact spine cardinality, no duplicate observations. 57 pytest tests cover the client, the raw store, the configuration, the dbt models, idempotency and the recorded live pages.",
+      "details": [
+        "The spine test is the reprocessing guard: if the fact ever has more or fewer rows than the configuration predicts, the build fails.",
+        "Hard failures stop the run; the population plausibility check (more than 10 percent movement year over year) only warns."
+      ],
+      "snippets": [
+        {
+          "file": "dbt/tests/assert_spine_complete.sql",
+          "start": 1,
+          "end": 3,
+          "lang": "sql",
+          "caption": "Exact cardinality against the spine."
+        },
+        {
+          "file": "dbt/tests/assert_indicator_values_valid.sql",
+          "start": 1,
+          "end": 7,
+          "lang": "sql",
+          "caption": "Value ranges per indicator."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [
+        "D3"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": "make run",
+          "expect": "dbt prints PASS=65 WARN=0 ERROR=0."
+        },
+        {
+          "cmd": "make test",
+          "expect": "57 passed."
+        }
+      ]
+    },
+    {
+      "id": "4-2",
+      "section": 4,
+      "number": "4.2",
+      "title": "Related indicators consistent",
+      "status": "met",
+      "requirement": "Check that related indicators are consistent with each other.",
+      "summary": "Where population, GDP and GDP per capita are all present, GDP per capita must equal GDP divided by population within a configurable relative tolerance, 1 percent by default.",
+      "details": [
+        "The tolerance is a dbt variable fed from config/pipeline.yaml, so tightening it is a configuration change.",
+        "The test joins the fact to itself three times on country and year; any row beyond the tolerance, or with a non-positive denominator, fails the build."
+      ],
+      "snippets": [
+        {
+          "file": "dbt/tests/assert_gdp_per_capita_consistent.sql",
+          "start": 1,
+          "end": 16,
+          "lang": "sql",
+          "caption": "The consistency test."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [],
+      "live": [
+        {
+          "href": "/country/USA",
+          "label": "The three indicators side by side"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "make run",
+          "expect": "assert_gdp_per_capita_consistent passes in the dbt output."
+        }
+      ]
+    },
+    {
+      "id": "4-3",
+      "section": 4,
+      "number": "4.3",
+      "title": "Tests never call the live API",
+      "status": "met",
+      "requirement": "Tests must run without calling the live API.",
+      "summary": "WB_OFFLINE_GUARD=1 makes the HTTP adapter raise before any real connection is opened. Client behaviour is tested with mocked responses; end-to-end runs use synthetic, paged, retry and recorded live fixtures under a temporary warehouse.",
+      "details": [
+        "The guard sits in the transport adapter, below the requests session, so no code path can reach the network by accident.",
+        "The nine real pages recorded on 2026-11-08 double as an offline demo of the pipeline."
+      ],
+      "snippets": [
+        {
+          "file": "wb_pipeline/client.py",
+          "start": 37,
+          "end": 46,
+          "lang": "python",
+          "caption": "The offline guard adapter."
+        },
+        {
+          "file": "tests/conftest.py",
+          "start": 12,
+          "end": 19,
+          "lang": "python",
+          "caption": "Guard set for every test; synthetic fixture directory."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [
+        "D5",
+        "D15"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": "WB_OFFLINE_GUARD=1 .venv/bin/python -m pytest -q",
+          "expect": "57 passed in about a minute with the network cable out."
+        }
+      ]
+    },
+    {
+      "id": "5-1",
+      "section": 5,
+      "number": "5.1",
+      "title": "Scheduling and incremental refreshes",
+      "status": "met",
+      "requirement": "Scheduling and incremental refreshes",
+      "summary": "Daily run after the World Bank publishing window under an orchestrator, one task per entity and indicator, with the lastupdated header compared before paging so unchanged indicators are skipped.",
+      "details": [
+        "Marts stay full rebuilds while the spine is small; fct_indicator_year moves to a merge on the business key when the country or year range grows, with the raw layer as the replayable history.",
+        "The lastupdated skip is designed and listed as unfinished in the README; the full fetch is nine requests today."
+      ],
+      "snippets": [],
+      "diagrams": [
+        "flow"
+      ],
+      "decisions": [
+        "D16"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": "grep -n \"Scheduling and incremental\" README.md",
+          "expect": "Section present in the production design note."
+        }
+      ]
+    },
+    {
+      "id": "5-2",
+      "section": 5,
+      "number": "5.2",
+      "title": "Late, corrected or changed source data",
+      "status": "met",
+      "requirement": "Handling late, corrected, or changed source data",
+      "summary": "The raw layer is append-only. A changed page gets a new page id, the old page stays, staging picks the latest sighting. A correction is a new version, not an overwrite, and the previous value stays queryable by page id.",
+      "details": [
+        "A valid_from and valid_to pair on observations (SCD2) is the next step when analysts need point-in-time reads; the sighting history already carries the information.",
+        "A per-run diff report (rows whose value changed between sightings) is designed and not implemented."
+      ],
+      "snippets": [
+        {
+          "file": "dbt/models/staging/stg_observations.sql",
+          "start": 13,
+          "end": 21,
+          "lang": "sql",
+          "caption": "Latest sighting wins; earlier pages remain."
+        }
+      ],
+      "diagrams": [
+        "pageid"
+      ],
+      "decisions": [
+        "D1",
+        "D6"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": "grep -n \"Late, corrected\" README.md",
+          "expect": "Section present."
+        }
+      ]
+    },
+    {
+      "id": "5-3",
+      "section": 5,
+      "number": "5.3",
+      "title": "Monitoring, alerting and quality failures",
+      "status": "met",
+      "requirement": "Monitoring, alerting, and data-quality failures",
+      "summary": "Hard test failures stop the run; soft ones warn. Every export writes run_summary with the run id, status, timestamps and the row count of every relation, and the overview shows the latest one. The production note adds per-run counts of new pages and rows by status, with alerts on a drop in present rows or a rise in not_returned.",
+      "details": [
+        "run_summary.json and run_summary.parquet are written on every export; the overview page and the footer show the latest run."
+      ],
+      "snippets": [
+        {
+          "file": "wb_pipeline/export.py",
+          "start": 26,
+          "end": 57,
+          "lang": "python",
+          "caption": "Export writes Parquet, CSV and the run summary."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [],
+      "live": [
+        {
+          "href": "/",
+          "label": "Run summary on the overview"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "cat outputs/run_summary.json",
+          "expect": "Run id, status, timestamps and relation counts."
+        }
+      ]
+    },
+    {
+      "id": "5-4",
+      "section": 5,
+      "number": "5.4",
+      "title": "Backfills and replayability",
+      "status": "met",
+      "requirement": "Backfills and replay-ability",
+      "summary": "Every run is reproducible from its stored raw pages: run --offline-fixtures replays without the API. Backfill by extending the configuration and running once; the spine grows and the marts rebuild, with the configuration hash on the run and on every spine row.",
+      "details": [
+        "The raw directory belongs under versioned object storage with a lifecycle policy; the DuckDB file is disposable and rebuildable from it."
+      ],
+      "snippets": [
+        {
+          "file": "wb_pipeline/cli.py",
+          "start": 44,
+          "end": 56,
+          "lang": "python",
+          "caption": "The offline-fixtures and path overrides used for replay."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [
+        "D5"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": ".venv/bin/python -m wb_pipeline run --offline-fixtures tests/fixtures/live_2026-11-08 --duckdb-path /tmp/wb.duckdb --export-dir /tmp/wb-out",
+          "expect": "Replays the recorded live pages with the same counts as the live run."
+        }
+      ]
+    },
+    {
+      "id": "5-5",
+      "section": 5,
+      "number": "5.5",
+      "title": "Mapping to Snowflake with Glue or EMR, or Azure",
+      "status": "met",
+      "requirement": "How the local design would map to Snowflake plus AWS Glue or EMR, or to comparable Azure services",
+      "summary": "Raw pages to S3 partitioned by run and entity, ingestion as a Glue Python shell job or a Lambda per indicator, Snowpipe or COPY into a VARIANT column, dbt-snowflake with the same models, MWAA or Step Functions, CloudWatch alerts. On Azure: ADLS Gen2, Functions or Data Factory, Synapse or Snowflake, Azure Monitor.",
+      "details": [
+        "The dbt project is the portable part: the schema macro, tests and reporting views move to Snowflake unchanged. EMR is overkill at this volume and fits only if the indicator list grows into the thousands."
+      ],
+      "snippets": [],
+      "diagrams": [
+        "layers"
+      ],
+      "decisions": [
+        "D12"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": "grep -n \"Mapping to Snowflake\" README.md",
+          "expect": "Section present."
+        }
+      ]
+    },
+    {
+      "id": "6-1",
+      "section": 6,
+      "number": "6.1",
+      "title": "Runs locally from the README",
+      "status": "met",
+      "requirement": "Any language or stack; it must run locally by following the README (Docker is fine).",
+      "summary": "Python 3.11, DuckDB and dbt. make setup and make run, or the plain python commands, or docker build and docker run with the data and outputs folders mounted.",
+      "details": [
+        "Pinned requirements, a virtual environment created by make, and a slim Python image for Docker. The dashboard needs Node 22 or newer and runs with npm run dev."
+      ],
+      "snippets": [
+        {
+          "file": "Dockerfile",
+          "start": 1,
+          "end": 8,
+          "lang": "docker",
+          "caption": "The image."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [
+        "D12"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": "docker build -t wb-pipeline . && docker run --rm -v \"$PWD/data:/app/data\" -v \"$PWD/outputs:/app/outputs\" -v \"$PWD/dashboard/data:/app/dashboard/data\" wb-pipeline",
+          "expect": "Exits 0 with the run summary."
+        }
+      ]
+    },
+    {
+      "id": "6-2",
+      "section": 6,
+      "number": "6.2",
+      "title": "README: setup, assumptions, trade-offs, walkthrough, AI usage",
+      "status": "met",
+      "requirement": "README with setup instructions, assumptions, trade-offs, a short walkthrough of your key decisions, and AI usage.",
+      "summary": "All five are named sections of the README, followed by the production design note, the repository history and the unfinished work the brief asks to document when the time budget is reached.",
+      "details": [
+        "The decision log on this site expands the README walkthrough with the options that lost and the consequence of each choice."
+      ],
+      "snippets": [],
+      "diagrams": [],
+      "decisions": [
+        "D18"
+      ],
+      "live": [
+        {
+          "href": "/brief/decisions",
+          "label": "Decision log"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "grep -n \"^## \" README.md",
+          "expect": "Lists Run it, Layout, How it works, Assumptions and trade-offs, Production design note, Walkthrough of key decisions, AI usage, Repository history, Unfinished work."
+        }
+      ]
+    },
+    {
+      "id": "6-3",
+      "section": 6,
+      "number": "6.3",
+      "title": "Sample outputs of the reporting queries",
+      "status": "met",
+      "requirement": "Sample output of the reporting queries (for example, CSV).",
+      "summary": "outputs/ holds the six reporting views as CSV plus run_summary.json from the live run. outputs/samples-synthetic/ holds the same set from the synthetic fixtures, where the missing-data report has rows.",
+      "details": [
+        "The Parquet copies under dashboard/data are the same views and feed this site, so the samples and the charts come from one export."
+      ],
+      "snippets": [
+        {
+          "file": "wb_pipeline/export.py",
+          "start": 26,
+          "end": 40,
+          "lang": "python",
+          "caption": "Which relations are exported."
+        }
+      ],
+      "diagrams": [],
+      "decisions": [
+        "D4"
+      ],
+      "live": [
+        {
+          "href": "/missing",
+          "label": "The same report rendered"
+        }
+      ],
+      "verify": [
+        {
+          "cmd": "wc -l outputs/*.csv outputs/samples-synthetic/*.csv",
+          "expect": "Live: 450 lines across six files; synthetic: three lines in rpt_missing_data.csv."
+        }
+      ]
+    },
+    {
+      "id": "6-4",
+      "section": 6,
+      "number": "6.4",
+      "title": "Git repository with commit history",
+      "status": "note",
+      "requirement": "Git/GitHub repository (with commit history) containing all the above.",
+      "note": "The working copy was deleted by accident on the afternoon of 2026-11-08, after the first full build and the first deployment. The tree was reconstructed the same day from the agents' session logs and the author's edit history, re-verified end to end and committed again in the original logical steps. The commit timestamps therefore postdate the work they describe.",
+      "summary": "Public repository at github.com/alexgrigoretech/lateral with the pipeline, the dbt project, the tests, the samples, the docs and this dashboard, committed in logical steps.",
+      "details": [
+        "The commits follow the layers of the work: scaffold, ingestion, dbt layers, runner and export, tests, samples, README, dashboard, a verification refresh, then this walkthrough with the review fixes."
+      ],
+      "snippets": [],
+      "diagrams": [],
+      "decisions": [
+        "D17"
+      ],
+      "live": [],
+      "verify": [
+        {
+          "cmd": "git log --oneline",
+          "expect": "Commits in logical steps, from the scaffold to the walkthrough."
+        }
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "title": "Idempotency by content hash, not by run id",
+      "context": "A re-run with unchanged source data must add no analytical records, and the source has no change feed.",
+      "options": [
+        "Delete and reload per run",
+        "Merge on business key at the fact",
+        "Hash the request and the body and insert each page once"
+      ],
+      "choice": "Page id = SHA-256(request URL + SHA-256(body)). An unchanged page is recognised at the byte level and only a sighting row is appended.",
+      "consequence": "Raw storage is append-only and auditable; a changed page is a new version rather than an overwrite. The cost is that identical content fetched under a different URL (for example a changed page size) counts as a new page.",
+      "subsections": [
+        "1-3",
+        "1-5",
+        "5-2"
+      ]
+    },
+    {
+      "id": "D2",
+      "title": "Full configuration spine as the fact grain",
+      "context": "Missing data must be a meaningful outcome, not an absent row the analyst has to infer.",
+      "options": [
+        "Fact rows only for returned observations",
+        "Fact rows for every configured country, indicator and year"
+      ],
+      "choice": "The fact is built from the spine with a left join to observations and a status per row.",
+      "consequence": "Cardinality is predictable (252 rows), the missing-data report is a filter, and adding a country or year is a configuration change. Historical rows outside the current configuration stay in raw and leave the marts.",
+      "subsections": [
+        "2-2",
+        "2-4",
+        "3-1"
+      ]
+    },
+    {
+      "id": "D3",
+      "title": "Marts rebuilt in full on every run",
+      "context": "Incremental merges are the usual source of duplicate and stale rows in small pipelines.",
+      "options": [
+        "Incremental dbt models with a merge strategy",
+        "Full rebuild from raw on every run"
+      ],
+      "choice": "Full rebuild. At this volume it costs seconds.",
+      "consequence": "Idempotent by construction and simpler to test; the raw layer is the history an incremental strategy would need later. Listed in the production note as the thing to change first when the spine grows.",
+      "subsections": [
+        "1-5",
+        "4-1"
+      ]
+    },
+    {
+      "id": "D4",
+      "title": "Reports as dbt views, not Python",
+      "context": "The brief asks for a reproducible reporting layer that answers four questions.",
+      "options": [
+        "pandas scripts writing CSV",
+        "SQL views in the warehouse exported to CSV and Parquet"
+      ],
+      "choice": "Six views in a reporting schema, documented and tested in the same dbt project as the model.",
+      "consequence": "The exact SQL is in the repository and the dashboard reads the same views, so the CSV samples and the charts cannot drift apart.",
+      "subsections": [
+        "6-3"
+      ]
+    },
+    {
+      "id": "D5",
+      "title": "Live fixtures recorded once and committed",
+      "context": "Tests must not call the live API, yet end-to-end coverage against real responses matters.",
+      "options": [
+        "Synthetic fixtures only",
+        "Record the nine real pages once and commit them next to synthetic ones"
+      ],
+      "choice": "Both. Synthetic fixtures carry the explicit null and the absent record; the recorded set carries the real shapes.",
+      "consequence": "The suite runs offline in about a minute and the recorded pages double as an offline demo and a replay input.",
+      "subsections": [
+        "4-3",
+        "5-4"
+      ]
+    },
+    {
+      "id": "D6",
+      "title": "Raw pages kept twice: in DuckDB and on disk",
+      "context": "Traceability needs the verbatim response; forensic review after a failed run needs it even when the transaction rolled back.",
+      "options": [
+        "JSON column only",
+        "Files only",
+        "Both"
+      ],
+      "choice": "Both. The JSON body is a column in raw.api_pages and a file under data/raw/<run_id>/.",
+      "consequence": "Storage is duplicated by design. Files may remain for a rolled-back request as evidence; the database stays consistent.",
+      "subsections": [
+        "1-1",
+        "1-3",
+        "2-1",
+        "5-2"
+      ]
+    },
+    {
+      "id": "D7",
+      "title": "Missing data as a status, never a zero",
+      "context": "The brief says to treat missing data as a meaningful outcome, not as zero.",
+      "options": [
+        "Fill with zero",
+        "Drop the row",
+        "Keep the row with a NULL value and a status"
+      ],
+      "choice": "Three statuses: present, null_value, not_returned. Value is NULL in both missing cases.",
+      "consequence": "Aggregates ignore missing values by construction and the two kinds of missing stay distinguishable, which matters for upstream diagnosis.",
+      "subsections": [
+        "2-3",
+        "3-1"
+      ]
+    },
+    {
+      "id": "D8",
+      "title": "Current income group applied to every year",
+      "context": "The World Bank API exposes a country's current income level only.",
+      "options": [
+        "Skip the income-group report",
+        "Apply the current classification to all years and say so",
+        "Source historical classifications elsewhere"
+      ],
+      "choice": "Apply the current classification and state the limitation in the model documentation and on the site.",
+      "consequence": "The report answers the question for the configured years at the cost of historical accuracy for countries that changed group; a second source is listed as unfinished work.",
+      "subsections": [
+        "3-4"
+      ]
+    },
+    {
+      "id": "D9",
+      "title": "Population-weighted averages for per-capita indicators",
+      "context": "Summing GDP per capita or life expectancy across countries is wrong, and a plain mean weights India like Canada.",
+      "options": [
+        "Unweighted mean only",
+        "Population-weighted average, with mean and median alongside"
+      ],
+      "choice": "Weighted average as the preferred aggregate for GDP per capita and life expectancy, sums for additive indicators, mean and median for a typical-country view.",
+      "consequence": "The weighted average is null when any member lacks a positive population weight, so partial groups never look complete. Life expectancy remains a descriptive aggregate, not a pooled life table.",
+      "subsections": [
+        "3-4"
+      ]
+    },
+    {
+      "id": "D10",
+      "title": "Year-over-year over the spine, not over present rows",
+      "context": "LAG over present rows silently compares across a gap year.",
+      "options": [
+        "LAG over present rows",
+        "LAG over the full configured spine with a status"
+      ],
+      "choice": "Window over the spine; statuses first_year, current_missing, prior_missing, prior_zero, ok.",
+      "consequence": "A gap produces prior_missing the year after it. Percentage change exists only for ok rows; prior_zero keeps the absolute change.",
+      "subsections": [
+        "3-2"
+      ]
+    },
+    {
+      "id": "D11",
+      "title": "One common latest year per indicator, plus a per-country view",
+      "context": "The latest available year differs by country and comparing across years is misleading.",
+      "options": [
+        "Each country at its own latest year",
+        "The latest year with any present value, every country listed for it"
+      ],
+      "choice": "Both views, clearly labelled: comparison at the common year, and a per-country latest available that is marked not comparable.",
+      "consequence": "A lagging country shows as missing in the comparison instead of being compared at a different year.",
+      "subsections": [
+        "3-3"
+      ]
+    },
+    {
+      "id": "D12",
+      "title": "DuckDB and dbt locally, no cloud",
+      "context": "The brief forbids cloud resources, paid accounts and API accounts.",
+      "options": [
+        "SQLite with hand-written SQL",
+        "Postgres in Docker",
+        "DuckDB embedded with dbt-duckdb"
+      ],
+      "choice": "DuckDB with dbt.",
+      "consequence": "Zero setup beyond pip, Parquet export for free, and a dbt project that moves to Snowflake with the adapter swapped. Single-writer file: concurrent ingest and transform are unsupported locally.",
+      "subsections": [
+        "1-4",
+        "1-6",
+        "5-5",
+        "6-1"
+      ]
+    },
+    {
+      "id": "D13",
+      "title": "Dashboard: live DuckDB over committed Parquet",
+      "context": "The optional dashboard should show the real reporting layer without a database server.",
+      "options": [
+        "Pre-render JSON at build time",
+        "Query DuckDB over the committed Parquet inside route handlers"
+      ],
+      "choice": "Live route handlers with DuckDB; the Parquet files ship with the app.",
+      "consequence": "The site and the CSV samples come from one export. The native DuckDB binding must match the Linux platform of the host, which the health route checks.",
+      "subsections": [
+        "1-6",
+        "3-5"
+      ]
+    },
+    {
+      "id": "D14",
+      "title": "One transaction per request, validated before insert",
+      "context": "A failure in the middle of a multi-page request must not leave a half request visible.",
+      "options": [
+        "Insert pages as they arrive",
+        "Collect and validate all pages, then insert in one transaction"
+      ],
+      "choice": "Collect, validate pagination consistency, then insert pages, sightings and exploded rows in one transaction; roll back on any error.",
+      "consequence": "Earlier completed requests in a failed run stay auditable; the failed request leaves only files on disk.",
+      "subsections": [
+        "1-2",
+        "1-5"
+      ]
+    },
+    {
+      "id": "D15",
+      "title": "Offline guard at the transport adapter",
+      "context": "A test that reaches the network by accident is worse than a failing test.",
+      "options": [
+        "Monkeypatch requests.get in tests",
+        "Raise inside the HTTP adapter whenever WB_OFFLINE_GUARD is set"
+      ],
+      "choice": "A guarded adapter mounted on the session; mocked responses are intercepted above it.",
+      "consequence": "No code path can open a real connection in tests, and the same switch protects the offline demo.",
+      "subsections": [
+        "4-3"
+      ]
+    },
+    {
+      "id": "D16",
+      "title": "Full re-fetch now, lastupdated skip later",
+      "context": "Nine requests cover the whole configuration; an incremental refresh would save little today.",
+      "options": [
+        "Implement the lastupdated comparison now",
+        "Design it, document it, keep the full fetch"
+      ],
+      "choice": "Keep the full fetch; the page id mechanism already makes it cheap to reconcile.",
+      "consequence": "Listed under unfinished work in the README and in the production note.",
+      "subsections": [
+        "5-1"
+      ]
+    },
+    {
+      "id": "D17",
+      "title": "Repository history rebuilt after an accidental deletion",
+      "context": "The working copy was deleted before it had a remote; the commits were lost with it.",
+      "options": [
+        "Push a single squashed commit",
+        "Recreate the original logical steps and say so"
+      ],
+      "choice": "Recreate the layers as separate commits and document the event in the README.",
+      "consequence": "Timestamps postdate the work they describe; the explanation is public. Lesson applied: push a new repository in its first hour.",
+      "subsections": [
+        "6-4"
+      ]
+    },
+    {
+      "id": "D18",
+      "title": "AI usage: orchestrate, implement, verify by hand",
+      "context": "The brief encourages AI tools and asks for the usage to be documented.",
+      "options": [
+        "Write everything by hand",
+        "Let an agent write everything unchecked",
+        "Plan and review with one agent, implement with another, verify outside the sandbox"
+      ],
+      "choice": "Claude Code planned, reviewed every diff, wrote the README, the stylesheet and this walkthrough; OpenAI Codex implemented from written briefs; the author decided every trade-off and ran the live and offline verification by hand.",
+      "consequence": "The agents' sandbox had no network, so every live run, fixture recording and dependency install was executed and checked by a person.",
+      "subsections": [
+        "6-2"
+      ]
+    }
+  ],
+  "diagrams": [
+    {
+      "id": "flow",
+      "title": "From the API to this page",
+      "caption": "One paged request per entity, raw rows kept verbatim, typed in staging, shaped in marts, answered in reporting views, exported once and read by the dashboard."
+    },
+    {
+      "id": "layers",
+      "title": "Four schemas, one file",
+      "caption": "raw pages and rows are only appended to, staging types and deduplicates, marts are rebuilt from the configuration spine, reporting views are exported."
+    },
+    {
+      "id": "pageid",
+      "title": "How a page becomes idempotent",
+      "caption": "The page id hashes the request and the body; a known page adds a sighting, a new page adds everything in one transaction."
+    },
+    {
+      "id": "status",
+      "title": "Three outcomes for every expected value",
+      "caption": "present, null_value and not_returned are derived from the join between the spine and the latest observation."
+    },
+    {
+      "id": "er",
+      "title": "Entities and keys",
+      "caption": "The relationships tested in dbt, from the raw pages to the fact."
+    },
+    {
+      "id": "yoy",
+      "title": "Year over year across a gap",
+      "caption": "The window runs over every configured year, so the year after a gap reads prior_missing instead of comparing across it."
+    }
+  ]
+}

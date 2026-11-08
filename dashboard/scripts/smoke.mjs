@@ -51,4 +51,24 @@ for (const route of ["/api/yoy?indicator=invalid", "/api/yoy", "/api/yoy?indicat
   console.log(`PASS 400 ${route}`);
 }
 
+for (const [route, expected] of [
+  ["/brief", ["requirements in the brief", "Notes a reviewer will notice"]],
+  ["/brief/1-1", ["Retrieve metadata and observations", "wb_pipeline/client.py lines 152 to 160"]],
+  ["/brief/3-4", ["Income groups by year", "rpt_income_group_by_year.sql"]],
+  ["/brief/6-4", ["Git repository with commit history", 'class="brief-note"']],
+  ["/brief/decisions", ["D18", "Applies to:"]],
+  ["/brief/architecture", ["Year over year across a gap"]],
+]) {
+  const response = await fetch(new URL(route, base));
+  assert.equal(response.status, 200, `${route}: expected 200`);
+  const body = (await response.text()).replace(/<!--[\s\S]*?-->/g, "");
+  for (const text of expected) assert.ok(body.includes(text), `${route}: missing ${text}`);
+  if (route === "/brief/architecture") assert.ok((body.match(/aria-label=/g) ?? []).length >= 6, `${route}: expected at least six aria-label attributes`);
+  console.log(`PASS 200 ${route} page-specific content`);
+}
+
+const unknownBrief = await fetch(new URL("/brief/9-9", base));
+assert.equal(unknownBrief.status, 404, "/brief/9-9: expected 404");
+console.log("PASS 404 /brief/9-9");
+
 console.log("Smoke checks passed");

@@ -6,8 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "smoke": "node scripts/smoke.mjs"
+    "lint": "eslint && node scripts/collect-snippets.mjs --check",
+    "smoke": "node scripts/smoke.mjs",
+    "snippets": "node scripts/collect-snippets.mjs"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.6-r.2",

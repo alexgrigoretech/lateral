@@ -1,0 +1,206 @@
+{
+  "Dockerfile#1-8": {
+    "file": "Dockerfile",
+    "start": 1,
+    "end": 8,
+    "code": "FROM python:3.11-slim\nWORKDIR /app\nCOPY requirements.txt .\nRUN python -m pip install --no-cache-dir -r requirements.txt\nCOPY wb_pipeline wb_pipeline\nCOPY config config\nCOPY dbt dbt\nCMD [\"python\", \"-m\", \"wb_pipeline\", \"run\"]"
+  },
+  "Makefile#1-16": {
+    "file": "Makefile",
+    "start": 1,
+    "end": 16,
+    "code": "PYTHON ?= python\nifeq ($(OS),Windows_NT)\nVENV_PYTHON := .venv/Scripts/python.exe\nelse\nVENV_PYTHON := .venv/bin/python\nendif\n\n.PHONY: setup run test export clean dbt-docs samples\nsetup:\n\t$(PYTHON) -m venv .venv\n\t$(VENV_PYTHON) -m pip install -r requirements.txt\nrun:\n\t$(VENV_PYTHON) -m wb_pipeline run\ntest:\n\t$(VENV_PYTHON) -m pytest -q\nexport:"
+  },
+  "config/pipeline.yaml#1-9": {
+    "file": "config/pipeline.yaml",
+    "start": 1,
+    "end": 9,
+    "code": "countries: [BRA, CAN, DEU, GBR, IND, JPN, MEX, USA, ZAF]\nindicators:\n  - {code: SP.POP.TOTL, label: 'Population, total', category: population}\n  - {code: NY.GDP.MKTP.CD, label: 'GDP, current US$', category: economy}\n  - {code: NY.GDP.PCAP.CD, label: 'GDP per capita, current US$', category: economy}\n  - {code: SP.DYN.LE00.IN, label: 'Life expectancy at birth, total years', category: health}\nyears:\n  start: 2018\n  end: 2024"
+  },
+  "config/pipeline.yaml#12-22": {
+    "file": "config/pipeline.yaml",
+    "start": 12,
+    "end": 22,
+    "code": "  per_page: 1000\n  timeout_s: 60\n  max_retries: 4\n  backoff: 1.0\npaths:\n  raw_dir: data/raw\n  duckdb_path: data/warehouse.duckdb\n  parquet_dir: dashboard/data\n  csv_dir: outputs\nconsistency_tolerance: 0.01\n"
+  },
+  "dashboard/lib/db.ts#28-45": {
+    "file": "dashboard/lib/db.ts",
+    "start": 28,
+    "end": 45,
+    "code": "async function database(): Promise<Database> {\n  if (!globalDatabase.worldBankDatabase) {\n    globalDatabase.worldBankDatabase = (async () => {\n      const instance = await DuckDBInstance.create(\":memory:\");\n      const connection = await instance.connect();\n      try {\n        await connection.run(\"SET TimeZone = 'UTC'\");\n        for (const name of PARQUET_VIEWS) {\n          const file = path.join(process.cwd(), \"data\", `${name}.parquet`).replaceAll(\"\\\\\", \"/\").replaceAll(\"'\", \"''\");\n          await connection.run(`CREATE VIEW ${name} AS SELECT * FROM read_parquet('${file}')`);\n        }\n        return { instance, connection, queue: Promise.resolve() };\n      } catch (error) {\n        connection.closeSync();\n        throw error;\n      }\n    })().catch((error: unknown) => {\n      globalDatabase.worldBankDatabase = undefined;"
+  },
+  "dbt/macros/generate_schema_name.sql#1-2": {
+    "file": "dbt/macros/generate_schema_name.sql",
+    "start": 1,
+    "end": 2,
+    "code": "{% macro generate_schema_name(custom_schema_name, node) %}\n    {{ custom_schema_name | trim if custom_schema_name else target.schema }}"
+  },
+  "dbt/models/marts/fct_indicator_year.sql#1-21": {
+    "file": "dbt/models/marts/fct_indicator_year.sql",
+    "start": 1,
+    "end": 21,
+    "code": "select\n    spine.country_iso3,\n    spine.indicator_code,\n    spine.year,\n    o.value,\n    case\n        when o.value is not null then 'present'\n        when o.page_id is not null then 'null_value'\n        else 'not_returned'\n    end as status,\n    o.value is null as is_missing,\n    o.page_id as source_page_id,\n    o.row_index as source_row_index,\n    o.source_lastupdated,\n    o.fetched_at,\n    current_timestamp as loaded_at\nfrom {{ source('raw', 'config_spine') }} spine\nleft join {{ ref('stg_observations') }} o\n    on spine.country_iso3 = o.country_iso3\n    and spine.indicator_code = o.indicator_code\n    and spine.year = o.year"
+  },
+  "dbt/models/marts/fct_indicator_year.sql#6-11": {
+    "file": "dbt/models/marts/fct_indicator_year.sql",
+    "start": 6,
+    "end": 11,
+    "code": "    case\n        when o.value is not null then 'present'\n        when o.page_id is not null then 'null_value'\n        else 'not_returned'\n    end as status,\n    o.value is null as is_missing,"
+  },
+  "dbt/models/marts/schema.yml#65-111": {
+    "file": "dbt/models/marts/schema.yml",
+    "start": 65,
+    "end": 111,
+    "code": "  - name: fct_indicator_year\n    description: \"One row for every configured country, indicator and year, including missing outcomes.\"\n    data_tests:\n      - business_key:\n          arguments:\n            columns: [country_iso3, indicator_code, year]\n    columns:\n      - name: country_iso3\n        description: \"Natural country key referencing dim_country.\"\n        data_tests:\n          - not_null\n          - relationships:\n              arguments:\n                to: ref('dim_country')\n                field: country_iso3\n      - name: indicator_code\n        description: \"Natural indicator key referencing dim_indicator.\"\n        data_tests:\n          - not_null\n          - relationships:\n              arguments:\n                to: ref('dim_indicator')\n                field: indicator_code\n      - name: year\n        description: \"Configured calendar year.\"\n        data_tests:\n          - not_null\n      - name: value\n        description: \"Nullable source observation value. Missing values remain null.\"\n      - name: status\n        description: \"Present for numeric values, null_value for explicit source nulls, not_returned for absent records.\"\n        data_tests:\n          - not_null\n          - accepted_values:\n              arguments:\n                values: [present, null_value, not_returned]\n      - name: is_missing\n        description: \"True when value is null.\"\n      - name: source_page_id\n        description: \"Source page content identifier, null when the record was not returned.\"\n      - name: source_row_index\n        description: \"Zero based source row index, null for absent records.\"\n      - name: source_lastupdated\n        description: \"Source release date from response metadata.\"\n      - name: fetched_at\n        description: \"Most recent eligible page sighting timestamp, null for absent records.\"\n      - name: loaded_at"
+  },
+  "dbt/models/reporting/rpt_completeness_by_country_indicator.sql#1-10": {
+    "file": "dbt/models/reporting/rpt_completeness_by_country_indicator.sql",
+    "start": 1,
+    "end": 10,
+    "code": "select\n    country_iso3,\n    indicator_code,\n    count(*) as expected_years,\n    count(value) as present_years,\n    count(*) - count(value) as missing_years,\n    100.0 * count(value) / count(*) as completeness_pct,\n    min(year) filter (where status = 'present') as first_year_present,\n    max(year) filter (where status = 'present') as last_year_present\nfrom {{ ref('fct_indicator_year') }}"
+  },
+  "dbt/models/reporting/rpt_income_group_by_year.sql#1-27": {
+    "file": "dbt/models/reporting/rpt_income_group_by_year.sql",
+    "start": 1,
+    "end": 27,
+    "code": "select\n    f.indicator_code,\n    coalesce(c.income_level_code, 'UNK') as income_level_code,\n    coalesce(c.income_level_name, 'Unknown') as income_level,\n    f.year,\n    count(*) as country_count,\n    count(f.value) as countries_present,\n    case when i.is_additive then sum(f.value) end as sum_value,\n    avg(f.value) as avg_value,\n    median(f.value) as median_value,\n    case\n        when f.indicator_code in ('NY.GDP.PCAP.CD', 'SP.DYN.LE00.IN')\n             and count(f.value) > 0\n             and count(*) filter (where p.value is null or p.value <= 0) = 0\n        then sum(f.value * p.value) filter (where f.value is not null)\n             / nullif(sum(p.value) filter (where f.value is not null), 0)\n    end as population_weighted_avg,\n    min(f.value) as min_value,\n    max(f.value) as max_value\nfrom {{ ref('fct_indicator_year') }} f\njoin {{ ref('dim_country') }} c using (country_iso3)\njoin {{ ref('dim_indicator') }} i using (indicator_code)\nleft join {{ ref('fct_indicator_year') }} p\n    on p.country_iso3 = f.country_iso3\n    and p.year = f.year\n    and p.indicator_code = 'SP.POP.TOTL'\ngroup by f.indicator_code, c.income_level_code, c.income_level_name, f.year, i.is_additive"
+  },
+  "dbt/models/reporting/rpt_latest_year_comparison.sql#1-20": {
+    "file": "dbt/models/reporting/rpt_latest_year_comparison.sql",
+    "start": 1,
+    "end": 20,
+    "code": "with latest as (\n    select indicator_code, max(year) as year\n    from {{ ref('fct_indicator_year') }}\n    where status = 'present'\n    group by indicator_code\n)\nselect\n    f.country_iso3,\n    f.indicator_code,\n    f.year,\n    f.value,\n    case when f.value is not null then\n        rank() over (partition by f.indicator_code order by f.value desc nulls last)\n    end as rank,\n    case when i.is_additive then\n        f.value / nullif(sum(f.value) over (partition by f.indicator_code), 0)\n    end as share_of_total\nfrom {{ ref('fct_indicator_year') }} f\njoin latest using (indicator_code, year)\njoin {{ ref('dim_indicator') }} i using (indicator_code)"
+  },
+  "dbt/models/reporting/rpt_missing_data.sql#1-10": {
+    "file": "dbt/models/reporting/rpt_missing_data.sql",
+    "start": 1,
+    "end": 10,
+    "code": "select\n    f.country_iso3,\n    c.country_name,\n    f.indicator_code,\n    i.label,\n    f.year,\n    f.status\nfrom {{ ref('fct_indicator_year') }} f\njoin {{ ref('dim_country') }} c using (country_iso3)\njoin {{ ref('dim_indicator') }} i using (indicator_code)"
+  },
+  "dbt/models/reporting/rpt_yoy_change.sql#1-34": {
+    "file": "dbt/models/reporting/rpt_yoy_change.sql",
+    "start": 1,
+    "end": 34,
+    "code": "with prior as (\n    select\n        country_iso3,\n        indicator_code,\n        year,\n        value,\n        lag(year) over yearly as prior_year,\n        lag(value) over yearly as prior_value\n    from {{ ref('fct_indicator_year') }}\n    window yearly as (partition by country_iso3, indicator_code order by year)\n), changes as (\n    select *,\n        case\n            when prior_year is null then 'first_year'\n            when value is null then 'current_missing'\n            when prior_value is null then 'prior_missing'\n            when prior_value = 0 then 'prior_zero'\n            else 'ok'\n        end as yoy_status\n    from prior\n)\nselect\n    country_iso3,\n    indicator_code,\n    year,\n    value,\n    prior_year,\n    prior_value,\n    value - prior_value as abs_change,\n    case when yoy_status = 'ok'\n         then 100.0 * (value - prior_value) / nullif(prior_value, 0)\n    end as pct_change,\n    yoy_status\nfrom changes"
+  },
+  "dbt/models/staging/stg_observations.sql#1-21": {
+    "file": "dbt/models/staging/stg_observations.sql",
+    "start": 1,
+    "end": 21,
+    "code": "select\n    trim(r.country_iso3) as country_iso3,\n    trim(r.indicator_code) as indicator_code,\n    cast(r.year as integer) as year,\n    r.value,\n    trim(r.obs_status) as obs_status,\n    trim(r.unit) as unit,\n    try_cast(r.decimal as integer) as decimal,\n    p.source_lastupdated,\n    r.page_id,\n    r.row_index,\n    s.fetched_at\nfrom {{ source('raw', 'observation_rows') }} r\njoin {{ source('raw', 'api_pages') }} p using (page_id)\njoin {{ source('raw', 'page_sightings') }} s using (page_id)\njoin {{ source('raw', 'runs') }} u on s.run_id = u.run_id\nwhere u.status in ('success', 'running')\nqualify row_number() over (\n    partition by r.country_iso3, r.indicator_code, r.year\n    order by s.fetched_at desc, u.started_at desc, r.page_id desc, r.row_index desc\n) = 1"
+  },
+  "dbt/models/staging/stg_observations.sql#13-21": {
+    "file": "dbt/models/staging/stg_observations.sql",
+    "start": 13,
+    "end": 21,
+    "code": "from {{ source('raw', 'observation_rows') }} r\njoin {{ source('raw', 'api_pages') }} p using (page_id)\njoin {{ source('raw', 'page_sightings') }} s using (page_id)\njoin {{ source('raw', 'runs') }} u on s.run_id = u.run_id\nwhere u.status in ('success', 'running')\nqualify row_number() over (\n    partition by r.country_iso3, r.indicator_code, r.year\n    order by s.fetched_at desc, u.started_at desc, r.page_id desc, r.row_index desc\n) = 1"
+  },
+  "dbt/tests/assert_gdp_per_capita_consistent.sql#1-16": {
+    "file": "dbt/tests/assert_gdp_per_capita_consistent.sql",
+    "start": 1,
+    "end": 16,
+    "code": "select\n    g.country_iso3,\n    g.year,\n    g.value as gdp,\n    p.value as population,\n    c.value as gdp_per_capita,\n    abs(c.value - g.value / nullif(p.value, 0)) / nullif(c.value, 0) as relative_error\nfrom {{ ref('fct_indicator_year') }} g\njoin {{ ref('fct_indicator_year') }} p\n    on p.country_iso3 = g.country_iso3 and p.year = g.year and p.indicator_code = 'SP.POP.TOTL'\njoin {{ ref('fct_indicator_year') }} c\n    on c.country_iso3 = g.country_iso3 and c.year = g.year and c.indicator_code = 'NY.GDP.PCAP.CD'\nwhere g.indicator_code = 'NY.GDP.MKTP.CD'\n    and g.status = 'present' and p.status = 'present' and c.status = 'present'\n    and (p.value <= 0 or c.value <= 0 or\n         abs(c.value - g.value / nullif(p.value, 0)) / nullif(c.value, 0) > {{ var('consistency_tolerance', 0.01) }})"
+  },
+  "dbt/tests/assert_indicator_values_valid.sql#1-7": {
+    "file": "dbt/tests/assert_indicator_values_valid.sql",
+    "start": 1,
+    "end": 7,
+    "code": "select *\nfrom {{ ref('fct_indicator_year') }}\nwhere status = 'present'\n    and (\n        (indicator_code in ('SP.POP.TOTL', 'NY.GDP.MKTP.CD') and value <= 0)\n        or (indicator_code = 'SP.DYN.LE00.IN' and (value < 20 or value > 100))\n        or not isfinite(value)"
+  },
+  "dbt/tests/assert_spine_complete.sql#1-3": {
+    "file": "dbt/tests/assert_spine_complete.sql",
+    "start": 1,
+    "end": 3,
+    "code": "select 'spine_count_mismatch' as failure\nwhere (select count(*) from {{ ref('fct_indicator_year') }})\n   <> (select count(*) from {{ source('raw', 'config_spine') }})"
+  },
+  "tests/conftest.py#12-19": {
+    "file": "tests/conftest.py",
+    "start": 12,
+    "end": 19,
+    "code": "@pytest.fixture(autouse=True)\ndef offline_guard(monkeypatch: pytest.MonkeyPatch) -> None:\n    monkeypatch.setenv(\"WB_OFFLINE_GUARD\", \"1\")\n\n\n@pytest.fixture\ndef fixture_dir() -> Path:\n    return Path(__file__).parent / \"fixtures\" / \"synthetic\""
+  },
+  "tests/test_idempotency.py#18-31": {
+    "file": "tests/test_idempotency.py",
+    "start": 18,
+    "end": 31,
+    "code": "def test_second_run_is_idempotent(warehouse: Config, fixture_dir: Path) -> None:\n    config = warehouse\n    with duckdb.connect(str(config.paths.duckdb_path)) as connection:\n        first_run_id = connection.execute(\"select run_id from raw.runs\").fetchone()[0]\n    before = counts(config)\n    second = run_pipeline(config, fixture_dir)\n    after = counts(config)\n    assert first_run_id != second[\"run_id\"]\n    assert before[:3] == after[:3] == (9, 251, 252)\n    assert after[3] - before[3] == before[0]\n    assert before[4] == 1 and after[4] == 2\n    with duckdb.connect(str(config.paths.duckdb_path)) as connection:\n        assert connection.execute(\"select count(*) from raw.runs where status = 'success'\").fetchone()[0] == 2\n        assert connection.execute(\"select min(fetched_at) >= (select max(started_at) from raw.runs) from staging.stg_observations\").fetchone()[0]"
+  },
+  "tests/test_idempotency.py#34-44": {
+    "file": "tests/test_idempotency.py",
+    "start": 34,
+    "end": 44,
+    "code": "def test_tenth_country_is_configuration_only(config: Config, fixture_dir: Path, tmp_path: Path, dbt_in_process: None) -> None:\n    data = yaml.safe_load(Path(\"config/pipeline.yaml\").read_text(encoding=\"utf-8\"))\n    data[\"countries\"].append(\"FRA\")\n    path = tmp_path / \"ten_countries.yaml\"\n    path.write_text(yaml.safe_dump(data), encoding=\"utf-8\")\n    expanded = replace(load_config(path), paths=config.paths)\n    run_pipeline(expanded, fixture_dir)\n    with duckdb.connect(str(expanded.paths.duckdb_path)) as connection:\n        assert connection.execute(\"select count(*) from marts.fct_indicator_year\").fetchone()[0] == 280\n        assert connection.execute(\"select count(*) from marts.dim_country\").fetchone()[0] == 10\n        assert connection.execute(\"select count(*) from marts.fct_indicator_year where country_iso3 = 'FRA' and status = 'not_returned'\").fetchone()[0] == 28"
+  },
+  "wb_pipeline/cli.py#44-56": {
+    "file": "wb_pipeline/cli.py",
+    "start": 44,
+    "end": 56,
+    "code": "    parser = argparse.ArgumentParser(description=\"World Bank indicators pipeline\")\n    commands = parser.add_subparsers(dest=\"command\", required=True)\n    for name in (\"run\", \"ingest\", \"transform\", \"export\"):\n        sub = commands.add_parser(name)\n        sub.add_argument(\"--config\", type=Path, default=Path(\"config/pipeline.yaml\"))\n        sub.add_argument(\"--duckdb-path\", type=Path)\n        sub.add_argument(\"--export-dir\", type=Path)\n        if name in (\"run\", \"ingest\"):\n            sub.add_argument(\"--offline-fixtures\", type=Path)\n            sub.add_argument(\"--skip-dbt\", action=\"store_true\")\n        if name == \"transform\":\n            sub.add_argument(\"--docs\", action=\"store_true\")\n    args = parser.parse_args(argv)"
+  },
+  "wb_pipeline/client.py#110-130": {
+    "file": "wb_pipeline/client.py",
+    "start": 110,
+    "end": 130,
+    "code": "    def _get(self, url: str) -> str:\n        for attempt in range(self.api.max_retries + 1):\n            try:\n                self.log.info(\"fetch url=%s attempt=%s\", url, attempt + 1)\n                response = self.session.get(url, timeout=self.api.timeout_s)\n                if response.status_code == 429 or response.status_code >= 500:\n                    raise requests.HTTPError(f\"HTTP {response.status_code}\", response=response)\n                response.raise_for_status()\n                response.encoding = \"utf-8\"\n                return response.text\n            except (requests.Timeout, requests.ConnectionError, requests.HTTPError) as exc:\n                if isinstance(exc, requests.HTTPError) and exc.response is not None:\n                    status = exc.response.status_code\n                    if status != 429 and status < 500:\n                        raise WorldBankError(f\"HTTP {status} at {url}\") from exc\n                if attempt == self.api.max_retries:\n                    raise RetryExhausted(f\"Failed after {attempt + 1} attempts at {url}: {exc}\") from exc\n                delay = self.api.backoff * 2 ** attempt\n                self.log.warning(\"retry error=%s delay_s=%.3f\", exc, delay)\n                time.sleep(delay + random.uniform(0, delay / 4))\n        raise AssertionError(\"Unreachable retry state\")"
+  },
+  "wb_pipeline/client.py#132-150": {
+    "file": "wb_pipeline/client.py",
+    "start": 132,
+    "end": 150,
+    "code": "    def fetch(self, entity: str, slug: str, endpoint: str, params: dict | None = None) -> list[Page]:\n        pages: list[Page] = []\n        page_no = 1\n        while True:\n            query = {\"format\": \"json\", \"per_page\": self.api.per_page, **(params or {}), \"page\": page_no}\n            url = requests.Request(\"GET\", f\"{self.api.base_url.rstrip('/')}/{endpoint}\", params=query).prepare().url\n            if self.offline_fixtures is not None:\n                path = self.offline_fixtures / page_filename(entity, slug, page_no)\n                body = path.read_text(encoding=\"utf-8\")\n                self.log.info(\"fixture path=%s\", path)\n            else:\n                body = self._get(url)\n            page = parse_page(url, body, page_no)\n            if pages and (page.pages != pages[0].pages or page.total != pages[0].total):\n                raise ResponseShapeError(f\"Pagination changed during request at {url}\")\n            pages.append(page)\n            if page_no == page.pages:\n                return pages\n            page_no += 1"
+  },
+  "wb_pipeline/client.py#152-160": {
+    "file": "wb_pipeline/client.py",
+    "start": 152,
+    "end": 160,
+    "code": "    def countries(self, countries: tuple[str, ...]) -> list[Page]:\n        return self.fetch(\"countries\", \"countries\", f\"country/{';'.join(countries)}\")\n\n    def observations(self, countries: tuple[str, ...], code: str, start: int, end: int) -> list[Page]:\n        return self.fetch(\"observations\", code, f\"country/{';'.join(countries)}/indicator/{code}\",\n                          {\"date\": f\"{start}:{end}\"})\n\n    def indicator_metadata(self, code: str) -> list[Page]:\n        return self.fetch(\"indicators\", code, f\"indicator/{code}\")"
+  },
+  "wb_pipeline/client.py#37-46": {
+    "file": "wb_pipeline/client.py",
+    "start": 37,
+    "end": 46,
+    "code": "class GuardedAdapter(HTTPAdapter):\n    def get_connection_with_tls_context(self, *args: Any, **kwargs: Any) -> Any:\n        if os.environ.get(\"WB_OFFLINE_GUARD\") == \"1\":\n            raise OfflineGuardError(\"WB_OFFLINE_GUARD prohibits real HTTP\")\n        return super().get_connection_with_tls_context(*args, **kwargs)\n\n    def get_connection(self, *args: Any, **kwargs: Any) -> Any:\n        if os.environ.get(\"WB_OFFLINE_GUARD\") == \"1\":\n            raise OfflineGuardError(\"WB_OFFLINE_GUARD prohibits real HTTP\")\n        return super().get_connection(*args, **kwargs)"
+  },
+  "wb_pipeline/client.py#73-75": {
+    "file": "wb_pipeline/client.py",
+    "start": 73,
+    "end": 75,
+    "code": "    @property\n    def page_id(self) -> str:\n        return hashlib.sha256((self.request_url + self.body_sha256).encode(\"utf-8\")).hexdigest()"
+  },
+  "wb_pipeline/client.py#82-96": {
+    "file": "wb_pipeline/client.py",
+    "start": 82,
+    "end": 96,
+    "code": "def parse_page(url: str, body: str, expected_page: int) -> Page:\n    try:\n        data = json.loads(body)\n        if not isinstance(data, list) or len(data) != 2:\n            raise ValueError(\"expected a two element array\")\n        meta, rows = data\n        if not isinstance(meta, dict) or not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):\n            raise ValueError(\"expected metadata and a list of records\")\n        page, pages, total = (int(meta[key]) for key in (\"page\", \"pages\", \"total\"))\n        if page != expected_page or page < 1 or pages < page or total < 0:\n            raise ValueError(\"inconsistent pagination\")\n    except (ValueError, TypeError, KeyError) as exc:\n        raise ResponseShapeError(f\"Invalid API page at {url}: {exc}\") from exc\n    return Page(url, page, pages, total, meta.get(\"lastupdated\"), utc_now(), body,\n                hashlib.sha256(body.encode(\"utf-8\")).hexdigest())"
+  },
+  "wb_pipeline/export.py#26-40": {
+    "file": "wb_pipeline/export.py",
+    "start": 26,
+    "end": 40,
+    "code": "def export(config: Config, run_id: str | None = None) -> dict:\n    config.paths.parquet_dir.mkdir(parents=True, exist_ok=True)\n    config.paths.csv_dir.mkdir(parents=True, exist_ok=True)\n    with duckdb.connect(str(config.paths.duckdb_path)) as connection:\n        if run_id is None:\n            result = connection.execute(\"select run_id from raw.runs where status = 'success' order by started_at desc limit 1\").fetchone()\n            if result is None:\n                raise ValueError(\"No successful run is available to export\")\n            run_id = result[0]\n        tables = [(\"marts\", name) for name in (\"dim_country\", \"dim_indicator\", \"fct_indicator_year\")]\n        reports = (\"rpt_missing_data\", \"rpt_completeness_by_country_indicator\", \"rpt_yoy_change\",\n                   \"rpt_latest_year_comparison\", \"rpt_latest_available_per_country\", \"rpt_income_group_by_year\")\n        tables += [(\"reporting\", name) for name in reports]\n        tables += [(\"raw\", \"runs\")]\n        for schema, table in tables:"
+  },
+  "wb_pipeline/export.py#26-57": {
+    "file": "wb_pipeline/export.py",
+    "start": 26,
+    "end": 57,
+    "code": "def export(config: Config, run_id: str | None = None) -> dict:\n    config.paths.parquet_dir.mkdir(parents=True, exist_ok=True)\n    config.paths.csv_dir.mkdir(parents=True, exist_ok=True)\n    with duckdb.connect(str(config.paths.duckdb_path)) as connection:\n        if run_id is None:\n            result = connection.execute(\"select run_id from raw.runs where status = 'success' order by started_at desc limit 1\").fetchone()\n            if result is None:\n                raise ValueError(\"No successful run is available to export\")\n            run_id = result[0]\n        tables = [(\"marts\", name) for name in (\"dim_country\", \"dim_indicator\", \"fct_indicator_year\")]\n        reports = (\"rpt_missing_data\", \"rpt_completeness_by_country_indicator\", \"rpt_yoy_change\",\n                   \"rpt_latest_year_comparison\", \"rpt_latest_available_per_country\", \"rpt_income_group_by_year\")\n        tables += [(\"reporting\", name) for name in reports]\n        tables += [(\"raw\", \"runs\")]\n        for schema, table in tables:\n            name = \"run_summary\" if table == \"runs\" else table\n            order = \"run_id\" if table == \"runs\" else \"all\"\n            query = f\"select * from {schema}.{table} order by {order}\"\n            parquet = _literal(config.paths.parquet_dir / f\"{name}.parquet\")\n            connection.execute(f\"copy ({query}) to {parquet} (format parquet, compression zstd)\")\n            if schema == \"reporting\":\n                csv = _literal(config.paths.csv_dir / f\"{name}.csv\")\n                connection.execute(f\"copy ({query}) to {csv} (format csv, header true, null '')\")\n        row = connection.execute(\"select started_at, finished_at, status from raw.runs where run_id = ?\", [run_id]).fetchone()\n        if row is None:\n            raise ValueError(f\"Unknown run {run_id}\")\n        summary = {\"run_id\": run_id, \"started_at\": row[0].isoformat(),\n                   \"finished_at\": row[1].isoformat() if row[1] else None, \"status\": row[2],\n                   \"counts\": layer_counts(connection), \"exported_at\": utc_now()}\n    with (config.paths.csv_dir / \"run_summary.json\").open(\"w\", encoding=\"utf-8\") as stream:\n        json.dump(summary, stream, indent=2)\n        stream.write(\"\\n\")"
+  },
+  "wb_pipeline/raw.py#62-71": {
+    "file": "wb_pipeline/raw.py",
+    "start": 62,
+    "end": 71,
+    "code": "def _insert_once(connection: duckdb.DuckDBPyConnection, table: str, columns: list[str],\n                 values: list[Any], keys: list[str]) -> None:\n    placeholders = \", \".join(\"?\" for _ in values)\n    condition = \" and \".join(f\"{key} = ?\" for key in keys)\n    key_values = [values[columns.index(key)] for key in keys]\n    connection.execute(\n        f\"insert into raw.{table} ({', '.join(columns)}) select {placeholders} \"\n        f\"where not exists (select 1 from raw.{table} where {condition})\",\n        values + key_values,\n    )"
+  },
+  "wb_pipeline/raw.py#74-91": {
+    "file": "wb_pipeline/raw.py",
+    "start": 74,
+    "end": 91,
+    "code": "def persist_pages(connection: duckdb.DuckDBPyConnection, config: Config, run_id: str,\n                  entity: str, slug: str, pages: list[Page]) -> None:\n    directory = config.paths.raw_dir / run_id\n    directory.mkdir(parents=True, exist_ok=True)\n    connection.execute(\"begin transaction\")\n    try:\n        for page in pages:\n            path = directory / page_filename(entity, slug, page.page)\n            with path.open(\"w\", encoding=\"utf-8\", newline=\"\") as stream:\n                stream.write(page.body)\n            _insert_once(connection, \"api_pages\",\n                         [\"page_id\", \"run_id\", \"entity\", \"request_url\", \"page_no\", \"pages\",\n                          \"total\", \"source_lastupdated\", \"fetched_at\", \"http_status\", \"body_sha256\", \"body\"],\n                         [page.page_id, run_id, entity, page.request_url, page.page, page.pages,\n                          page.total, page.lastupdated, page.fetched_at, page.http_status, page.body_sha256, page.body],\n                         [\"page_id\"])\n            _insert_once(connection, \"page_sightings\", [\"page_id\", \"run_id\", \"fetched_at\"],\n                         [page.page_id, run_id, page.fetched_at], [\"page_id\", \"run_id\"])"
+  },
+  "wb_pipeline/raw.py#92-119": {
+    "file": "wb_pipeline/raw.py",
+    "start": 92,
+    "end": 119,
+    "code": "            for index, row in enumerate(page.rows):\n                provenance = [page.page_id, index, run_id, page.fetched_at, utc_now()]\n                suffix = [\"page_id\", \"row_index\", \"run_id\", \"fetched_at\", \"ingested_at\"]\n                if entity == \"countries\":\n                    columns = [\"country_iso3\", \"country_iso2\", \"name\", \"region_code\", \"region_name\",\n                               \"income_level_code\", \"income_level_name\", \"lending_type\", \"capital_city\",\n                               \"latitude\", \"longitude\"]\n                    values = [row.get(\"id\"), row.get(\"iso2Code\"), row.get(\"name\"),\n                              row.get(\"region\", {}).get(\"id\"), row.get(\"region\", {}).get(\"value\"),\n                              row.get(\"incomeLevel\", {}).get(\"id\"), row.get(\"incomeLevel\", {}).get(\"value\"),\n                              row.get(\"lendingType\", {}).get(\"value\"), row.get(\"capitalCity\"),\n                              row.get(\"latitude\"), row.get(\"longitude\")]\n                    table = \"country_rows\"\n                elif entity == \"indicators\":\n                    columns = [\"indicator_code\", \"name\", \"unit\", \"source_note\", \"source_organization\"]\n                    values = [row.get(k) for k in (\"id\", \"name\", \"unit\", \"sourceNote\", \"sourceOrganization\")]\n                    table = \"indicator_meta_rows\"\n                elif entity == \"observations\":\n                    columns = [\"country_iso3\", \"country_iso2\", \"country_name\", \"indicator_code\",\n                               \"indicator_name\", \"year\", \"value\", \"unit\", \"obs_status\", \"decimal\"]\n                    values = [row.get(\"countryiso3code\"), row.get(\"country\", {}).get(\"id\"),\n                              row.get(\"country\", {}).get(\"value\"), row.get(\"indicator\", {}).get(\"id\"),\n                              row.get(\"indicator\", {}).get(\"value\"), row.get(\"date\"), row.get(\"value\"),\n                              row.get(\"unit\"), row.get(\"obs_status\"), str(row[\"decimal\"]) if row.get(\"decimal\") is not None else None]\n                    table = \"observation_rows\"\n                else:\n                    raise ValueError(f\"Unknown entity {entity}\")\n                _insert_once(connection, table, columns + suffix, values + provenance, [\"page_id\", \"row_index\"])"
+  }
+}
