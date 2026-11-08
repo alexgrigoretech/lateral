@@ -5,5 +5,6 @@ export const REPORT_LINKS = [
   ["/latest", "Latest year"],
   ["/income-groups", "Income groups"],
   ["/brief", "Brief"],
+  ["/brief/architecture", "Architecture"],
   ["/about", "About"],
 ] as const;

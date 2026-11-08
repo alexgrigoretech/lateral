@@ -99,6 +99,7 @@ export function ValueChart(props: ValueChartProps) {
   const max = values.length ? Math.max(...values) : 0;
   const ticks = metric === "pct_change" && (values.length || domain) ? niceTicks(domain?.[0] ?? min, domain?.[1] ?? max) : undefined;
   const narrowRange = metric === "value" && values.length > 0 && (indicator.indicator_code === "SP.DYN.LE00.IN" || max - min <= 10);
+  const narrowDomain = Math.floor(min) === Math.ceil(max) ? [Math.floor(min) - 1, Math.ceil(max) + 1] : [Math.floor(min), Math.ceil(max)];
   const formatTick = (value: number) => metric === "pct_change" ? percentTick(value, ticks) : narrowRange && indicator.indicator_code === "SP.DYN.LE00.IN" ? `${value.toFixed(0)} years` : formatValue(value);
   const metricLabel = metric === "pct_change" ? "Percentage change" : "Value";
   const latest = rows.length ? rows.reduce((a, b) => a.year > b.year ? a : b) : undefined;
@@ -109,7 +110,7 @@ export function ValueChart(props: ValueChartProps) {
         <LineChart data={rows.filter((row) => !("first" in row && row.first))} margin={{ top: 16, right: 16, bottom: 8, left: 8 }}>
           <CartesianGrid strokeWidth={0.5} vertical={false} />
           <XAxis dataKey="year" tickFormatter={year} tick={tickStyle} minTickGap={20} />
-          <YAxis ticks={ticks} interval={metric === "pct_change" ? 0 : undefined} domain={ticks ? [ticks[0], ticks[ticks.length - 1]] : domain ?? (narrowRange ? [Math.floor(min), Math.ceil(max)] : [0, "auto"])} allowDecimals={!narrowRange} tickFormatter={formatTick} tick={tickStyle} width={metric === "pct_change" ? 52 : 90} />
+          <YAxis ticks={ticks} interval={metric === "pct_change" ? 0 : undefined} domain={ticks ? [ticks[0], ticks[ticks.length - 1]] : domain ?? (narrowRange ? narrowDomain : metric === "pct_change" ? ["auto", "auto"] : [0, "auto"])} allowDecimals={!narrowRange} tickFormatter={formatTick} tick={tickStyle} width={metric === "pct_change" ? 52 : 90} />
           {metric === "pct_change" && <ReferenceLine y={0} stroke="var(--ink-3)" strokeDasharray="3 3" />}
           <Tooltip {...TOOLTIP_PROPS} cursor={{ strokeWidth: 1 }} formatter={(value) => numeric(value, formatValue)} labelFormatter={(value) => `Year ${value}`} />
           <Line dataKey="value" name={metric === "pct_change" ? "Percentage change" : indicator.label} type="linear" stroke={EMPHASIS} strokeWidth={2} isAnimationActive={false} dot={false} activeDot={{ r: 4 }} connectNulls={false} />
@@ -129,7 +130,7 @@ export function LatestChart({ rows, indicator }: { rows: LatestRow[]; indicator:
       <ResponsiveContainer width="100%" height={Math.max(280, rows.length * 48)}>
         <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 56, bottom: 8, left: 8 }}>
           <CartesianGrid strokeWidth={0.5} horizontal={false} />
-          <XAxis type="number" tickFormatter={(value: number) => indicator.indicator_code === "SP.DYN.LE00.IN" ? value.toFixed(0) : valueFor(indicator.indicator_code, value)} tick={tickStyle} />
+          <XAxis type="number" tickFormatter={(value: number) => indicator.indicator_code === "SP.DYN.LE00.IN" ? `${value.toFixed(0)} years` : valueFor(indicator.indicator_code, value)} tick={tickStyle} />
           <YAxis type="category" dataKey="country_name" width={110} tick={tickStyle} />
           <Tooltip {...TOOLTIP_PROPS} formatter={(value) => numeric(value, (item) => valueFor(indicator.indicator_code, item))} />
           <Bar dataKey="value" name={indicator.label} fill={EMPHASIS} isAnimationActive={false} maxBarSize={26}>

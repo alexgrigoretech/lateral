@@ -132,6 +132,10 @@ a.visually-hidden:focus {
 
 /* Frame */
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--page);
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -583,6 +587,7 @@ a.visually-hidden:focus {
   .data-table tbody th:first-child, .data-table:where(:has(tbody th:first-child)) thead th:first-child { position: sticky; left: 0; background: var(--surface); }
   .data-table:where(:has(tbody th:first-child)) thead th:first-child { background: var(--surface-2); z-index: 2; }
   .data-table.data-table--static-head tbody th:first-child, .data-table.data-table--static-head thead th:first-child { position: static; }
+  .data-table th[scope="rowgroup"], .data-table:where(:has(th[scope="rowgroup"])) thead th:first-child { position: static; }
   .table-scroll .data-table caption { max-width: calc(100vw - 2 * var(--gutter) - 2px); }
   .segmented { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
 }
