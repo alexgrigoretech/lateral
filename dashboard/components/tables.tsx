@@ -6,6 +6,7 @@ function tone(status: YoyStatus): string {
   return status === "ok" ? "ok" : status === "first_year" ? "muted" : "warn";
 }
 
+/** Merges adjacent rows only and relies on the caller's row order. The queries order by the group key first. */
 export function groupConsecutive<T>(rows: T[], key: (row: T) => string): T[][] {
   const groups: T[][] = [];
   for (const row of rows) {

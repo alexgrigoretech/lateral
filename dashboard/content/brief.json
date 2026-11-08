@@ -1391,7 +1391,7 @@
     {
       "id": "er",
       "title": "Entities and keys",
-      "caption": "The relationships tested in dbt, from the raw pages to the fact."
+      "caption": "The relationships tested in dbt, from the raw pages to the fact. Three short lines mark a many end; circles mark an optional source record."
     },
     {
       "id": "yoy",

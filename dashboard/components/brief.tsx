@@ -21,8 +21,7 @@ export function CodeSample({ snippet }: { snippet: Snippet }) {
 }
 
 export function DiagramFigure({ diagram }: { diagram: Diagram }) {
-  const caption = diagram.id === "er" ? `${diagram.caption} Three short lines mark a many end; circles mark an optional source record.` : diagram.caption;
-  return <figure className="diagram"><figcaption className="diagram__title">{diagram.title}</figcaption><div className="diagram__scroll" tabIndex={0} role="region" aria-label={`${diagram.title} diagram, scrolls sideways on narrow screens`}><DiagramById id={diagram.id} /></div><p className="diagram__caption">{caption}<span className="diagram__hint"> Scroll sideways to see the whole diagram.</span></p></figure>;
+  return <figure className="diagram"><figcaption className="diagram__title">{diagram.title}</figcaption><div className="diagram__scroll" tabIndex={0} role="region" aria-label={`${diagram.title} diagram, scrolls sideways on narrow screens`}><DiagramById id={diagram.id} /></div><p className="diagram__caption">{diagram.caption}<span className="diagram__hint"> Scroll sideways to see the whole diagram.</span></p></figure>;
 }
 
 export function DecisionCard({ decision, references = false }: { decision: Decision; references?: boolean }) {
@@ -44,7 +43,7 @@ export function VerifyBlock({ verify }: { verify: Verify }) {
 export function Pager({ id }: { id: string }) {
   const { previous, next } = neighbours(id);
   return <nav className="pager-nav" aria-label="Previous and next">
-    <Link className="pager-nav__link pager-nav__link--prev" href={previous ? `/brief/${previous.id}` : "/brief"}><span className="pager-nav__dir">← Previous</span><span className="pager-nav__title">{previous ? `${previous.number} ${previous.title}` : "Brief walkthrough"}</span></Link>
-    <Link className="pager-nav__link pager-nav__link--next" href={next ? `/brief/${next.id}` : "/brief/decisions"}><span className="pager-nav__dir">Next →</span><span className="pager-nav__title">{next ? `${next.number} ${next.title}` : "Decision log"}</span></Link>
+    <Link className="pager-nav__link pager-nav__link--prev" href={previous ? `/brief/${previous.id}` : "/brief"}><span className="pager-nav__dir"><span aria-hidden="true">←</span> Previous</span><span className="pager-nav__title">{previous ? `${previous.number} ${previous.title}` : "Brief walkthrough"}</span></Link>
+    <Link className="pager-nav__link pager-nav__link--next" href={next ? `/brief/${next.id}` : "/brief/decisions"}><span className="pager-nav__dir">Next <span aria-hidden="true">→</span></span><span className="pager-nav__title">{next ? `${next.number} ${next.title}` : "Decision log"}</span></Link>
   </nav>;
 }

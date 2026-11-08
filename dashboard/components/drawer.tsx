@@ -73,7 +73,7 @@ export function Drawer({ sections, subsections }: { sections: Section[]; subsect
       <div className="drawer__backdrop" onClick={dismiss} aria-hidden="true" />
       <nav className="drawer__panel" ref={panel} aria-label="Site menu links">
         <div className="drawer__head"><span>World Bank country indicators</span><button ref={closeButton} type="button" className="drawer__close" aria-label="Close menu" onClick={dismiss}>×</button></div>
-        <div className="drawer__group"><h2 className="drawer__group-title">Reports</h2>{REPORT_LINKS.filter(([href]) => href !== "/brief").map(([href, label]) => <Link className="drawer__link" key={href} href={href} aria-current={current(href)} onClick={navigate}>{label}</Link>)}</div>
+        <div className="drawer__group"><h2 className="drawer__group-title">Reports</h2>{REPORT_LINKS.filter(([href]) => !href.startsWith("/brief")).map(([href, label]) => <Link className="drawer__link" key={href} href={href} aria-current={current(href)} onClick={navigate}>{label}</Link>)}</div>
         <div className="drawer__group"><h2 className="drawer__group-title">Brief walkthrough</h2>
           <Link className="drawer__link drawer__link--section" href="/brief" aria-current={current("/brief")} onClick={navigate}>All requirements</Link>
           {sections.map((section) => <div key={section.number}>
