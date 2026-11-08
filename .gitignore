@@ -10,3 +10,4 @@ __pycache__/
 /dashboard/.next/
 /.pytest_cache/
 *.egg-info/
+/.samples-tmp/

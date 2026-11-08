@@ -1,6 +1,6 @@
 # World Bank country indicators
 
-Run from this directory with Node.js 22 or newer. The local and Vercel runtime is Node.js 24. Dependencies must already be installed.
+The dashboard is live at https://lateral.analyticslab.ro. Run from this directory with Node.js 22 or newer. The local and Vercel runtime is Node.js 24. Dependencies must already be installed.
 
 ```powershell
 npm run dev

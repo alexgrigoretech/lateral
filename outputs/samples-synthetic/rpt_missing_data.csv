@@ -1,0 +1,3 @@
+country_iso3,country_name,indicator_code,label,year,status
+BRA,Synthetic BRA,NY.GDP.PCAP.CD,"GDP per capita, current US$",2024,not_returned
+ZAF,Synthetic ZAF,SP.DYN.LE00.IN,"Life expectancy at birth, total years",2024,null_value

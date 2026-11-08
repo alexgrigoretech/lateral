@@ -4,7 +4,7 @@ A local, configuration-driven pipeline that pulls yearly country indicators from
 
 Countries: BRA, CAN, DEU, GBR, IND, JPN, MEX, USA, ZAF. Indicators: population (SP.POP.TOTL), GDP in current US dollars (NY.GDP.MKTP.CD), GDP per capita (NY.GDP.PCAP.CD), life expectancy at birth (SP.DYN.LE00.IN). Years 2018 to 2024. All of this lives in `config/pipeline.yaml` and can be changed without touching code.
 
-The dashboard under `dashboard/` reads the exported Parquet files through DuckDB inside Next.js route handlers. It is live at https://worldbank-indicators.vercel.app and its deployment is described in `dashboard/README.md`.
+The dashboard under `dashboard/` reads the exported Parquet files through DuckDB inside Next.js route handlers. It is live at https://lateral.analyticslab.ro and its deployment is described in `dashboard/README.md`. The site also carries a brief walkthrough (https://lateral.analyticslab.ro/brief) that maps every requirement of the assessment to the code that meets it, with code samples, diagrams and the decision log. The repository is public at https://github.com/alexgrigoretech/lateral.
 
 ## Run it
 
@@ -32,7 +32,7 @@ docker build -t wb-pipeline .
 docker run --rm -v "$PWD/data:/app/data" -v "$PWD/outputs:/app/outputs" -v "$PWD/dashboard/data:/app/dashboard/data" wb-pipeline
 ```
 
-`make run` prints a JSON summary with the run id and the row count of every relation. Outputs land in three places: the DuckDB warehouse at `data/warehouse.duckdb` (schemas raw, staging, marts, reporting), CSV samples of the reporting queries in `outputs/`, and Parquet copies of marts and reports in `dashboard/data/`. The verbatim API responses sit under `data/raw/<run_id>/`.
+`make samples` regenerates `outputs/samples-synthetic/` from the synthetic fixtures. `make run` prints a JSON summary with the run id and the row count of every relation. Outputs land in three places: the DuckDB warehouse at `data/warehouse.duckdb` (schemas raw, staging, marts, reporting), CSV samples of the reporting queries in `outputs/`, and Parquet copies of marts and reports in `dashboard/data/`. The verbatim API responses sit under `data/raw/<run_id>/`.
 
 Running the pipeline twice against unchanged source data adds a run record and page sightings and nothing else. The second live run on 2026-11-08 left `raw.api_pages` at 9 rows, `raw.observation_rows` at 252 and `marts.fct_indicator_year` at 252, while `raw.page_sightings` went from 9 to 18.
 
@@ -51,6 +51,7 @@ dbt/                      dbt project on DuckDB: staging, marts, reporting, sing
 docs/data-model.md        grain, keys, relationships, status semantics, ER diagram
 tests/                    pytest suite, synthetic fixtures and recorded live fixtures
 outputs/                  CSV samples of the reporting layer from the last live run
+outputs/samples-synthetic CSV samples from the synthetic fixtures, where the missing-data report has rows
 dashboard/                Next.js dashboard reading dashboard/data/*.parquet through DuckDB
 ```
 
@@ -101,12 +102,14 @@ Add the ISO3 code to `countries` or an entry with `code`, `label` and `category`
 
 ## Assumptions and trade-offs
 
-- The current World Bank release (source `lastupdated` 2026-10-08) has a value for every configured combination, so the live run reports zero missing rows. The missing-data path is exercised by the synthetic fixtures and visible in the dashboard's empty state. Adding 2025 to the year range would surface `not_returned` rows immediately.
+- The current World Bank release (source `lastupdated` 2026-10-08) has a value for every configured combination, so the live run reports zero missing rows and `outputs/rpt_missing_data.csv` is a header only. `outputs/samples-synthetic/` holds the same six reports produced from `tests/fixtures/synthetic`, where `rpt_missing_data.csv` carries one `not_returned` and one `null_value` row. The dashboard shows the empty state with the explanation. Adding 2025 to the year range would surface `not_returned` rows immediately.
+- Nothing was created for this assessment on a cloud provider, and no paid or API account was opened. The pipeline needs none of that: public API, a local DuckDB file, dbt in process. The dashboard is the optional extra from section 3 of the brief and runs locally with `npm run dev`. A copy is also hosted on the author's existing Vercel hobby account under the author's existing domain (lateral.analyticslab.ro), both of which predate the assessment; it is a convenience for reviewers, not part of the pipeline.
 - Income groups are taken from the current country metadata and applied to every year. The API does not expose historical income classification, and this is stated in the model documentation.
 - Population-weighted life expectancy is a descriptive aggregate of country estimates, not a pooled life table. Analysts are told which statistic to use for which indicator in `docs/data-model.md`.
 - Marts are rebuilt in full rather than merged incrementally. At this volume a rebuild costs seconds and removes a whole class of merge bugs; the raw layer is the append-only history that an incremental strategy would need later.
-- DuckDB and dbt locally instead of a hosted warehouse, because the brief forbids cloud resources. The production note below maps each piece onto Snowflake with Glue or EMR.
+- DuckDB and dbt locally instead of a hosted warehouse, because the brief forbids creating cloud resources. The production note below maps each piece onto Snowflake with Glue or EMR.
 - Raw pages are also written to disk per run even when DuckDB already has them, as forensic evidence; this duplicates storage and is a deliberate choice.
+- Docker was verified on 2026-11-08 by building the image and running it on the recorded fixtures with `WB_OFFLINE_GUARD=1`; the mounted `data`, `outputs` and `dashboard/data` folders received the same files as a local run.
 - The DuckDB file is a single-writer store. Concurrent ingestion and transformation against the same file are not supported and are not needed locally.
 
 ## Production design note
