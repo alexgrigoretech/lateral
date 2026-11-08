@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ValueChart, YoyChart } from "@/components/charts";
+import { ExportLinks } from "@/components/export-links";
 import { Selector } from "@/components/selectors";
 import { YoyTable } from "@/components/tables";
 import { selectedIndicator, type SearchParams } from "@/lib/page-params";
@@ -26,6 +27,7 @@ export default async function Yoy({ searchParams }: { searchParams: SearchParams
   return <div className="page">
     <header><h1 className="page__title">Year over year</h1><p className="page__lede">{indicator.label}. Follow annual change and inspect each country on the same percentage scale.</p></header>
     <div className="controls"><Selector label="Indicator" parameter="indicator" value={indicator.indicator_code} options={meta.indicators.map((item) => ({ value: item.indicator_code, label: item.label }))} /></div>
+    <ExportLinks items={[{ dataset: "rpt_yoy_change", label: `Year over year change (${indicator.label})`, filters: { indicator: indicator.indicator_code } }]} />
     <section className="section"><YoyChart rows={data.rows} focus={focus} defaultCountryName={defaultCountry?.country_name ?? null} /></section>
     <section className="section" aria-labelledby="multiples-title"><h2 className="section__title" id="multiples-title">One country at a time</h2><p className="section__note">All nine charts use the same vertical scale.</p><div className="small-multiples">{meta.countries.map((country) => <ValueChart key={country.country_iso3} metric="pct_change" indicator={indicator} title={country.country_name} domain={domain} rows={data.rows.filter((row) => row.country_iso3 === country.country_iso3)} />)}</div></section>
     <section className="section" aria-labelledby="changes-title"><h2 className="section__title" id="changes-title">Values and change status</h2><YoyTable rows={data.rows} showIndicator={false} /></section>

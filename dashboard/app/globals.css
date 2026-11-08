@@ -1046,3 +1046,67 @@ body[data-drawer-open="true"] { overflow: hidden; }
 .brief-page__crumbs > * { position: relative; }
 .brief-page__crumbs > *:not(:last-child) { margin-right: 14px; }
 .brief-page__crumbs > *:not(:last-child)::after { position: absolute; right: -15px; top: 50%; transform: translateY(-50%); margin-left: 0; }
+
+/* Export (2026-11-09): download rows on report pages, the export catalogue and the manifest table. Design audit by the uiux agent on Opus applied (H1, M1 to M5, L2, L6). */
+.export-links {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 6px 18px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.controls + .export-links { margin-top: -28px; }
+.export-links__label { font-weight: 500; }
+.export-links__list { display: flex; flex-wrap: wrap; gap: 4px 32px; margin: 0; padding: 0; list-style: none; }
+.export-links__item { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.export-links__name { color: var(--ink-2); }
+.export-links__all { display: inline-flex; align-items: center; min-height: 24px; font-weight: 500; }
+.download-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 2px;
+  font-weight: 500;
+  font-variant-numeric: normal;
+  color: var(--accent-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: currentColor;
+  text-underline-offset: 3px;
+  border-radius: 3px;
+}
+.download-link:hover { text-decoration-thickness: 2px; }
+.download-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.data-table .download-link + .download-link { margin-left: 12px; }
+.data-table td:has(> .download-link) { white-space: nowrap; }
+.data-table td code, .data-table th code { font-size: 12.5px; }
+.data-table .na { color: var(--ink-3); }
+.export-datasets tbody th { white-space: normal; }
+.export-datasets tbody th code { overflow-wrap: normal; word-break: keep-all; }
+.manifest-table tbody th { white-space: normal; }
+.manifest-table .hash { display: block; inline-size: calc(32ch + 0.6em); min-inline-size: calc(32ch + 0.6em); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; white-space: normal; }
+.manifest-table .cell-id { white-space: nowrap; }
+.manifest-table .cell-id .hash { display: inline-block; vertical-align: top; }
+.manifest-link { padding: 0; }
+@media (max-width: 1100px) {
+  .site-nav { display: none; }
+}
+@media (max-width: 640px) {
+  .controls + .export-links { margin-top: -16px; }
+  .export-links { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; }
+  .export-links__label { grid-column: 1; grid-row: 1; }
+  .export-links__all { grid-column: 2; grid-row: 1; }
+  .export-links__list { grid-column: 1 / -1; flex-direction: column; gap: 6px; }
+  .export-links__item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 0 8px; }
+}
+@media (pointer: coarse) {
+  .download-link, .export-links__all { min-height: 44px; padding: 0 8px; }
+  .export-links__item { gap: 0; margin-right: -8px; }
+  .export-links__all { margin-right: -8px; }
+}
+@media print {
+  .export-links { display: none; }
+}

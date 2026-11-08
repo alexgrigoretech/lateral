@@ -1,20 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { GRAINS } from "@/lib/datasets";
 
 export const metadata: Metadata = { title: "About the data" };
-
-const GRAINS = [
-  ["dim_country", "country", "country_iso3"],
-  ["dim_indicator", "indicator", "indicator_code"],
-  ["fct_indicator_year", "expected country, indicator and calendar year", "country_iso3, indicator_code, year"],
-  ["rpt_completeness_by_country_indicator", "country and indicator", "country_iso3, indicator_code"],
-  ["rpt_missing_data", "missing country, indicator and year", "country_iso3, indicator_code, year"],
-  ["rpt_yoy_change", "country, indicator and year (the fact grain)", "country_iso3, indicator_code, year"],
-  ["rpt_latest_year_comparison", "country and indicator", "country_iso3, indicator_code"],
-  ["rpt_latest_available_per_country", "country and indicator", "country_iso3, indicator_code"],
-  ["rpt_income_group_by_year", "indicator, income group and year", "indicator_code, income_level_code, year"],
-  ["run_summary", "pipeline run", "run_id"],
-] as const;
 
 export default function About() {
   return <div className="page">

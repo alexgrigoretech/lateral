@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExportLinks } from "@/components/export-links";
 import { Matrices, StatusLegend } from "@/components/matrices";
 import { groupConsecutive } from "@/components/tables";
 import { describeStatus, sourceDate, year } from "@/lib/format";
@@ -25,6 +26,7 @@ export default async function Missing() {
     <div className="kpi-strip" role="group" aria-label="Value status counts">
       {statuses.map(([status, label]) => <div className="kpi" key={status}><div className="kpi__value">{counts[status]}</div><div className="kpi__label"><span className={`matrix__cell matrix__cell--${status}`} aria-hidden="true"></span>{label}</div></div>)}
     </div>
+    <ExportLinks items={[{ dataset: "rpt_missing_data", label: "Missing combinations" }, { dataset: "rpt_completeness_by_country_indicator", label: "Completeness by country and indicator" }]} />
     <section className="section" aria-labelledby="missing-title">
       <h2 className="section__title" id="missing-title">Missing combinations</h2>
       {data.missing.length > 0 && <StatusLegend />}

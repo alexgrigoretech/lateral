@@ -1,4 +1,5 @@
 # World Bank country indicators pipeline
+![CI](https://github.com/alexgrigoretech/lateral/actions/workflows/ci.yml/badge.svg)
 
 A local, configuration-driven pipeline that pulls yearly country indicators from the public World Bank API, keeps every raw response, builds an analytics-ready model in DuckDB with dbt, tests it offline, and ships a reporting layer plus a dashboard.
 
@@ -32,7 +33,7 @@ docker build -t wb-pipeline .
 docker run --rm -v "$PWD/data:/app/data" -v "$PWD/outputs:/app/outputs" -v "$PWD/dashboard/data:/app/dashboard/data" wb-pipeline
 ```
 
-`make samples` regenerates `outputs/samples-synthetic/` from the synthetic fixtures. `make run` prints a JSON summary with the run id and the row count of every relation. Outputs land in three places: the DuckDB warehouse at `data/warehouse.duckdb` (schemas raw, staging, marts, reporting), CSV samples of the reporting queries in `outputs/`, and Parquet copies of marts and reports in `dashboard/data/`. The verbatim API responses sit under `data/raw/<run_id>/`.
+`make samples` regenerates `outputs/samples-synthetic/` from the synthetic fixtures. `make run` prints a JSON summary with the run id and the row count of every relation. Outputs land in three places: the DuckDB warehouse at `data/warehouse.duckdb` (schemas raw, staging, marts, reporting), CSV samples of the reporting queries in `outputs/`, and Parquet copies of marts and reports in `dashboard/data/`. The export also writes `manifest.json` next to the CSV files and next to the Parquet files, listing every exported file with its path relative to the common parent of the Parquet and CSV folders, row count, size and sha256 so a reviewer can prove the committed samples came from the stated run, and `python -m wb_pipeline manifest --check` recomputes the hashes and exits nonzero on any mismatch. The verbatim API responses sit under `data/raw/<run_id>/`.
 
 Running the pipeline twice against unchanged source data adds a run record and page sightings and nothing else. The second live run on 2026-11-08 left `raw.api_pages` at 9 rows, `raw.observation_rows` at 252 and `marts.fct_indicator_year` at 252, while `raw.page_sightings` went from 9 to 18.
 
@@ -94,7 +95,7 @@ The year-over-year view uses LAG over the full configured spine, so a gap year p
 
 `dbt build` runs 65 tests on every run: uniqueness and not-null on each business key, relationships from the fact to both dimensions, accepted values for every status column, year bounds from the configuration, positive population and GDP, life expectancy between 20 and 100, exact spine cardinality, observation deduplication, and a cross-indicator consistency check: where population, GDP and GDP per capita are all present, GDP per capita must equal GDP divided by population within the configured relative tolerance (1 percent). Population moving more than 10 percent year over year warns without failing.
 
-`pytest` runs without the network. A guard (`WB_OFFLINE_GUARD=1`) makes the HTTP client raise on any real connection attempt, and the suite uses `responses` for client behaviour (paging, retries, exhaustion, malformed bodies, page id stability) and recorded fixtures for end-to-end runs under a temporary warehouse: a synthetic set with one explicit null and one absent record, a three-page pagination set, a 503-then-200 sequence, and the nine real pages recorded from the live API on 2026-11-08. Tests also prove that two runs over the same fixtures add no analytical rows and that adding a tenth country in the configuration yields 10 x 4 x 7 fact rows with no code change.
+`pytest` runs without the network. A guard (`WB_OFFLINE_GUARD=1`) makes the HTTP client raise on any real connection attempt, and the suite uses `responses` for client behaviour (paging, retries, exhaustion, malformed bodies, page id stability) and recorded fixtures for end-to-end runs under a temporary warehouse: a synthetic set with one explicit null and one absent record, a three-page pagination set, a 503-then-200 sequence, and the nine real pages recorded from the live API on 2026-11-08. Tests also prove that two runs over the same fixtures add no analytical rows and that adding a tenth country in the configuration yields 10 x 4 x 7 fact rows with no code change. GitHub Actions runs the same offline suite, an offline pipeline run on the recorded fixtures, the manifest check, the dashboard lint, build and smoke test, and gitleaks on every push to main and pull request (workflow in `.github/workflows/ci.yml`).
 
 ### Adding a country or an indicator
 

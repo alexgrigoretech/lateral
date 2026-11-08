@@ -1,0 +1,126 @@
+{
+  "run_id": "20261108T151747Z95f28a",
+  "exported_at": "2026-11-08T22:56:42.686378+00:00",
+  "generator": "wb_pipeline export",
+  "files": [
+    {
+      "path": "dashboard/data/dim_country.parquet",
+      "format": "parquet",
+      "rows": 9,
+      "bytes": 2852,
+      "sha256": "8cb3298323be5a014a73ca03e35759abaf95b862544138cede9caa7e14f56f73"
+    },
+    {
+      "path": "dashboard/data/dim_indicator.parquet",
+      "format": "parquet",
+      "rows": 4,
+      "bytes": 4863,
+      "sha256": "32e5a26cf645ae280bfc38f56018e16f432916cc6deb29547ff9cd287772ea22"
+    },
+    {
+      "path": "dashboard/data/fct_indicator_year.parquet",
+      "format": "parquet",
+      "rows": 252,
+      "bytes": 4888,
+      "sha256": "8a78514d14b76ff9e203c91e2bc2c6e2df353e0691fc5b94eee31b74d3435d0c"
+    },
+    {
+      "path": "dashboard/data/rpt_completeness_by_country_indicator.parquet",
+      "format": "parquet",
+      "rows": 36,
+      "bytes": 1957,
+      "sha256": "7692975aaaf01ded81ec64d8b93d2d0bbf44f85ac732cf1d389861f7ea77f9cf"
+    },
+    {
+      "path": "dashboard/data/rpt_income_group_by_year.parquet",
+      "format": "parquet",
+      "rows": 84,
+      "bytes": 5756,
+      "sha256": "c18d481e7e7eee10797d054a17a4acdc51e33f5fe25c1502b74e68552cf9620f"
+    },
+    {
+      "path": "dashboard/data/rpt_latest_available_per_country.parquet",
+      "format": "parquet",
+      "rows": 36,
+      "bytes": 1187,
+      "sha256": "f5297483bac9d5bd579be5035cecd820640a159914e01692e60ebd7b29e05284"
+    },
+    {
+      "path": "dashboard/data/rpt_latest_year_comparison.parquet",
+      "format": "parquet",
+      "rows": 36,
+      "bytes": 1702,
+      "sha256": "c592322471e8fd81fb18b921d44daa586a3f7b7f92448f53caa44ee8a4c9550e"
+    },
+    {
+      "path": "dashboard/data/rpt_missing_data.parquet",
+      "format": "parquet",
+      "rows": 0,
+      "bytes": 210,
+      "sha256": "0be776acf01c0f95404d74da9c72fbd48768cf7f69fab02cec9e01d34a7305a7"
+    },
+    {
+      "path": "dashboard/data/rpt_yoy_change.parquet",
+      "format": "parquet",
+      "rows": 252,
+      "bytes": 8693,
+      "sha256": "51abc45b58322d35b48559333264d7a17000328a0b2dfc0d713ba9744eb1b32d"
+    },
+    {
+      "path": "dashboard/data/run_summary.parquet",
+      "format": "parquet",
+      "rows": 6,
+      "bytes": 1999,
+      "sha256": "c11201dcf5c36d6585b4a607c395da2cb4afc4e7450368182e18746d23284aea"
+    },
+    {
+      "path": "outputs/rpt_completeness_by_country_indicator.csv",
+      "format": "csv",
+      "rows": 36,
+      "bytes": 1574,
+      "sha256": "d44fa354732ce8dde38a127f19d2bb41d7d2afdfb707923d60aefd5a4df93c08"
+    },
+    {
+      "path": "outputs/rpt_income_group_by_year.csv",
+      "format": "csv",
+      "rows": 84,
+      "bytes": 10121,
+      "sha256": "bef5286bb3a0ccf006ada4e470731375fa16518dc7183a4b43a82aa70c75bc7b"
+    },
+    {
+      "path": "outputs/rpt_latest_available_per_country.csv",
+      "format": "csv",
+      "rows": 36,
+      "bytes": 1396,
+      "sha256": "1a665c4d21be43fb7c1924eaf2f82eeea9f7a81440a131183573d4ddade63a0a"
+    },
+    {
+      "path": "outputs/rpt_latest_year_comparison.csv",
+      "format": "csv",
+      "rows": 36,
+      "bytes": 1868,
+      "sha256": "3434d904ddd7bcea3dc343676019ceb4b4d08d84e640ef670ac807935599b126"
+    },
+    {
+      "path": "outputs/rpt_missing_data.csv",
+      "format": "csv",
+      "rows": 0,
+      "bytes": 59,
+      "sha256": "e9f3785961fcb80c6a23c93337e3e78386188bf582c90b17d5a8fb4bed284d41"
+    },
+    {
+      "path": "outputs/rpt_yoy_change.csv",
+      "format": "csv",
+      "rows": 252,
+      "bytes": 22669,
+      "sha256": "eefbf893f1b74de3c81be12f6309558352ebb9ce4bfd2d9b5d208c22734d2733"
+    },
+    {
+      "path": "outputs/run_summary.json",
+      "format": "json",
+      "rows": null,
+      "bytes": 914,
+      "sha256": "855c683e7440cb0cc94a50ebc33af7b38bb667a9f9c0a68a81ec9ef548847bf4"
+    }
+  ]
+}

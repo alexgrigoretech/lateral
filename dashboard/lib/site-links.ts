@@ -4,6 +4,7 @@ export const REPORT_LINKS = [
   ["/yoy", "Year over year"],
   ["/latest", "Latest year"],
   ["/income-groups", "Income groups"],
+  ["/export", "Export"],
   ["/brief", "Brief"],
   ["/brief/architecture", "Architecture"],
   ["/about", "About"],
