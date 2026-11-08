@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { PARQUET_VIEWS, query } from "./db";
 import type { AvailableRow, CompletenessRow, Country, Fact, IncomeRow, Indicator, LatestRow, LineageRow, Matrix, Meta, MissingRow, Run, YoyRow } from "./types";
 
@@ -13,7 +14,7 @@ export async function validateCountry(iso3: string): Promise<void> {
   if (!countries.some((country) => country.country_iso3 === iso3)) throw new ParameterError("Unknown country code");
 }
 
-export async function getMeta(): Promise<Meta> {
+export const getMeta = cache(async (): Promise<Meta> => {
   const [runs, counts, indicators, countries] = await Promise.all([
     query<Run>("SELECT run_id, started_at, finished_at, status, source_lastupdated_max FROM run_summary ORDER BY started_at DESC, run_id DESC LIMIT 1"),
     query<Meta["counts"]>(`SELECT (SELECT count(*) FROM dim_country) AS countries,
@@ -25,7 +26,7 @@ export async function getMeta(): Promise<Meta> {
     query<Country>("SELECT * FROM dim_country ORDER BY country_name"),
   ]);
   return { latest_run: runs[0] ?? null, counts: counts[0], indicators, countries };
-}
+});
 
 export async function getCompleteness(indicatorCode?: string): Promise<{ matrices: Matrix[]; completeness: CompletenessRow[]; missing: MissingRow[] }> {
   if (indicatorCode !== undefined) await validateIndicator(indicatorCode);

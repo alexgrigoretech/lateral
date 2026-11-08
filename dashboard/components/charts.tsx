@@ -3,11 +3,17 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Bar, BarChart, CartesianGrid, LabelList, Line, LineChart, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { groupConsecutive } from "@/components/tables";
 import { describeStatus, percent, share, valueFor, year } from "@/lib/format";
 import { EMPHASIS, INCOME_ORDER, INK, SERIES, SURFACE } from "@/lib/tokens";
 import type { Fact, IncomeRow, Indicator, LatestRow, Statistic, YoyRow } from "@/lib/types";
 
 const tickStyle = { fill: INK[1], fontSize: 12 };
+const TOOLTIP_PROPS = {
+  itemStyle: { color: "var(--ink)" },
+  labelStyle: { color: "var(--ink-2)", fontWeight: 500 },
+  contentStyle: { background: "var(--surface)", border: "1px solid var(--hairline)" },
+};
 
 type Point = { year: number; [key: string]: number | null };
 
@@ -25,12 +31,33 @@ function chartPoints<T extends { year: number }>(rows: T[], key: (row: T) => str
   return Array.from(points.values()).sort((a, b) => a.year - b.year);
 }
 
+export function niceTicks(min: number, max: number): number[] {
+  for (let exponent = -1; ; exponent++) {
+    for (const multiplier of [1, 2, 2.5, 5]) {
+      const step = multiplier * 10 ** exponent;
+      const first = Math.floor(Number((min / step).toFixed(10)));
+      let last = Math.ceil(Number((max / step).toFixed(10)));
+      if (last - first > 7) continue;
+      if (first === last) last = first + 1;
+      const decimals = Math.max(0, -exponent + (multiplier === 2.5 ? 1 : 0));
+      return Array.from({ length: last - first + 1 }, (_, index) => Number(((first + index) * step).toFixed(decimals)));
+    }
+  }
+}
+
+function percentTick(value: number, ticks?: number[]): string {
+  const step = ticks ? Number((ticks[1] - ticks[0]).toPrecision(12)) : 1;
+  return Number.isInteger(step) ? percent(value).replace(".0%", "%") : percent(value);
+}
+
 export function YoyChart({ rows, focus, defaultCountryName }: { rows: YoyRow[]; focus: string | null; defaultCountryName: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const countries = Array.from(new Map(rows.map((row) => [row.country_iso3, row.country_name])));
-  const points = chartPoints(rows, (row) => row.country_iso3, (row) => row.pct_change);
+  const points = chartPoints(rows.filter((row) => row.yoy_status !== "first_year"), (row) => row.country_iso3, (row) => row.pct_change);
+  const changes = rows.flatMap((row) => row.pct_change === null ? [] : [row.pct_change]);
+  const ticks = changes.length ? niceTicks(Math.min(...changes), Math.max(...changes)) : undefined;
   function select(iso3: string) {
     const params = new URLSearchParams(searchParams.toString());
     if (focus === iso3) params.set("focus", "none");
@@ -44,9 +71,9 @@ export function YoyChart({ rows, focus, defaultCountryName }: { rows: YoyRow[]; 
         <LineChart data={points} margin={{ top: 12, right: 24, bottom: 12, left: 12 }}>
           <CartesianGrid strokeWidth={0.5} vertical={false} />
           <XAxis dataKey="year" tickFormatter={year} tick={tickStyle} />
-          <YAxis domain={[(min: number) => Math.floor(min), (max: number) => Math.ceil(max)]} tickCount={5} tickFormatter={(value: number) => value === 0 ? "0%" : `${value > 0 ? "+" : ""}${value}%`} tick={tickStyle} width={80} />
+          <YAxis ticks={ticks} domain={ticks ? [ticks[0], ticks[ticks.length - 1]] : [(min: number) => Math.floor(min), (max: number) => Math.ceil(max)]} interval={0} tickFormatter={(value: number) => percentTick(value, ticks)} tick={tickStyle} width={80} />
           <ReferenceLine y={0} stroke="var(--ink-3)" strokeDasharray="3 3" />
-          <Tooltip cursor={{ strokeWidth: 1 }} formatter={(value) => numeric(value, percent)} labelFormatter={(value) => `Year ${value}`} itemSorter={(item) => -(Number(item.value) || 0)} />
+          <Tooltip {...TOOLTIP_PROPS} cursor={{ strokeWidth: 1 }} formatter={(value) => numeric(value, percent)} labelFormatter={(value) => `Year ${value}`} itemSorter={(item) => -(Number(item.value) || 0)} />
           {[...countries].sort(([a], [b]) => Number(a === focus) - Number(b === focus)).map(([iso3, name]) => <Line key={iso3} dataKey={iso3} name={name} type="linear" stroke={iso3 === focus ? "var(--accent)" : "var(--series-muted)"} strokeWidth={iso3 === focus ? 2.5 : 1.5} isAnimationActive={false} dot={false} activeDot={{ r: 4 }} connectNulls={false} />)}
         </LineChart>
       </ResponsiveContainer>
@@ -64,41 +91,47 @@ type ValueChartProps = { indicator: Indicator; title: string; domain?: [number, 
 export function ValueChart(props: ValueChartProps) {
   const { indicator, title, domain, metric } = props;
   const rows = props.metric === "pct_change"
-    ? props.rows.map((row) => ({ year: row.year, value: row.pct_change, status: describeStatus(row.yoy_status) }))
+    ? props.rows.map((row) => ({ year: row.year, value: row.pct_change, status: describeStatus(row.yoy_status), first: row.yoy_status === "first_year" }))
     : props.rows.map((row) => ({ year: row.year, value: row.value, status: describeStatus(row.status) }));
   const formatValue = (value: number) => metric === "pct_change" ? percent(value) : valueFor(indicator.indicator_code, value);
+  const values = rows.flatMap((row) => row.value === null ? [] : [row.value]);
+  const min = values.length ? Math.min(...values) : 0;
+  const max = values.length ? Math.max(...values) : 0;
+  const ticks = metric === "pct_change" && (values.length || domain) ? niceTicks(domain?.[0] ?? min, domain?.[1] ?? max) : undefined;
+  const narrowRange = metric === "value" && values.length > 0 && (indicator.indicator_code === "SP.DYN.LE00.IN" || max - min <= 10);
+  const formatTick = (value: number) => metric === "pct_change" ? percentTick(value, ticks) : narrowRange && indicator.indicator_code === "SP.DYN.LE00.IN" ? `${value.toFixed(0)} years` : formatValue(value);
   const metricLabel = metric === "pct_change" ? "Percentage change" : "Value";
   const latest = rows.length ? rows.reduce((a, b) => a.year > b.year ? a : b) : undefined;
   return <div className="chart">
     <h3 className="chart__title">{title}</h3>
     <figure className="chart__body" aria-label={`${title}. ${metricLabel} by year is in the accompanying table.`}>
       <ResponsiveContainer width="100%" height={220}>
-        <LineChart data={rows} margin={{ top: 16, right: 16, bottom: 8, left: 8 }}>
+        <LineChart data={rows.filter((row) => !("first" in row && row.first))} margin={{ top: 16, right: 16, bottom: 8, left: 8 }}>
           <CartesianGrid strokeWidth={0.5} vertical={false} />
           <XAxis dataKey="year" tickFormatter={year} tick={tickStyle} minTickGap={20} />
-          <YAxis domain={domain ?? (metric === "pct_change" || indicator.indicator_code === "SP.DYN.LE00.IN" ? ["auto", "auto"] : [0, "auto"])} tickFormatter={formatValue} tick={tickStyle} width={90} />
+          <YAxis ticks={ticks} interval={metric === "pct_change" ? 0 : undefined} domain={ticks ? [ticks[0], ticks[ticks.length - 1]] : domain ?? (narrowRange ? [Math.floor(min), Math.ceil(max)] : [0, "auto"])} allowDecimals={!narrowRange} tickFormatter={formatTick} tick={tickStyle} width={metric === "pct_change" ? 52 : 90} />
           {metric === "pct_change" && <ReferenceLine y={0} stroke="var(--ink-3)" strokeDasharray="3 3" />}
-          <Tooltip cursor={{ strokeWidth: 1 }} formatter={(value) => numeric(value, formatValue)} labelFormatter={(value) => `Year ${value}`} />
+          <Tooltip {...TOOLTIP_PROPS} cursor={{ strokeWidth: 1 }} formatter={(value) => numeric(value, formatValue)} labelFormatter={(value) => `Year ${value}`} />
           <Line dataKey="value" name={metric === "pct_change" ? "Percentage change" : indicator.label} type="linear" stroke={EMPHASIS} strokeWidth={2} isAnimationActive={false} dot={false} activeDot={{ r: 4 }} connectNulls={false} />
           {latest && latest.value !== null && <ReferenceDot x={latest.year} y={latest.value} r={4} fill={EMPHASIS} stroke={SURFACE} />}
         </LineChart>
       </ResponsiveContainer>
     </figure>
-    <table className="visually-hidden"><caption>{title}, {metricLabel.toLowerCase()} by year</caption><thead><tr><th scope="col">Year</th><th scope="col">{metricLabel}</th><th scope="col">Status</th></tr></thead><tbody>{rows.map((row) => <tr key={row.year}><th scope="row">{row.year}</th><td>{row.value === null ? row.status : formatValue(row.value)}</td><td>{row.status}</td></tr>)}</tbody></table>
+    <div className="visually-hidden"><table><caption>{title}, {metricLabel.toLowerCase()} by year</caption><thead><tr><th scope="col">Year</th><th scope="col">{metricLabel}</th><th scope="col">Status</th></tr></thead><tbody>{rows.map((row) => <tr key={row.year}><th scope="row">{row.year}</th><td>{row.value === null ? row.status : formatValue(row.value)}</td><td>{row.status}</td></tr>)}</tbody></table></div>
   </div>;
 }
 
 export function LatestChart({ rows, indicator }: { rows: LatestRow[]; indicator: Indicator }) {
   const caption = `Latest comparable values${indicator.is_additive ? " and shares of the selected country total" : ""}`;
   return <div className="chart">
-    <h2 className="chart__title">{indicator.indicator_code === "SP.DYN.LE00.IN" ? "Country ranking, years" : "Country ranking"}</h2>
+    <h2 className="chart__title">Country ranking</h2>
     <figure className="chart__body" aria-label="Countries ranked by value, largest first. Exact values and shares are in the table below.">
       <ResponsiveContainer width="100%" height={Math.max(280, rows.length * 48)}>
         <BarChart data={rows} layout="vertical" margin={{ top: 8, right: 56, bottom: 8, left: 8 }}>
           <CartesianGrid strokeWidth={0.5} horizontal={false} />
           <XAxis type="number" tickFormatter={(value: number) => indicator.indicator_code === "SP.DYN.LE00.IN" ? value.toFixed(0) : valueFor(indicator.indicator_code, value)} tick={tickStyle} />
           <YAxis type="category" dataKey="country_name" width={110} tick={tickStyle} />
-          <Tooltip formatter={(value) => numeric(value, (item) => valueFor(indicator.indicator_code, item))} />
+          <Tooltip {...TOOLTIP_PROPS} formatter={(value) => numeric(value, (item) => valueFor(indicator.indicator_code, item))} />
           <Bar dataKey="value" name={indicator.label} fill={EMPHASIS} isAnimationActive={false} maxBarSize={26}>
             <LabelList dataKey="value" position="right" formatter={(value: unknown) => numeric(value, (item) => valueFor(indicator.indicator_code, item))} />
           </Bar>
@@ -114,6 +147,7 @@ export function IncomeChart({ rows, indicator, statistic, statisticLabel }: { ro
   const names = new Map(rows.map((row) => [row.income_level_code, row.income_level]));
   const counts = new Map(rows.map((row) => [row.income_level_code, row.country_count]));
   const caption = `${statisticLabel} and country coverage within the selected sample`;
+  const groups = groupConsecutive(rows, (row) => row.income_level_code);
   return <div className="chart">
     <h2 className="chart__title">{statisticLabel} by income group</h2>
     {statistic === "sum_value" && <p className="section__note">Sums cover different numbers of countries (see legend). Use average or median to compare groups of different size.</p>}
@@ -123,7 +157,7 @@ export function IncomeChart({ rows, indicator, statistic, statisticLabel }: { ro
           <CartesianGrid strokeWidth={0.5} vertical={false} />
           <XAxis dataKey="year" tickFormatter={year} tick={tickStyle} />
           <YAxis tickFormatter={(value: number) => valueFor(indicator.indicator_code, value)} tick={tickStyle} width={100} />
-          <Tooltip cursor={{ strokeWidth: 1 }} formatter={(value) => numeric(value, (item) => valueFor(indicator.indicator_code, item))} labelFormatter={(value) => `Year ${value}`} />
+          <Tooltip {...TOOLTIP_PROPS} cursor={{ strokeWidth: 1 }} formatter={(value) => numeric(value, (item) => valueFor(indicator.indicator_code, item))} labelFormatter={(value) => `Year ${value}`} itemSorter={(item) => INCOME_ORDER.findIndex((code) => code === item.dataKey)} />
           {INCOME_ORDER.map((code, index) => <Line key={code} dataKey={code} name={names.get(code) ?? code} type="linear" stroke={SERIES[index]} strokeDasharray={code === "UMC" ? "6 3" : code === "LMC" ? "2 2" : undefined} strokeWidth={2} isAnimationActive={false} dot={false} activeDot={{ r: 4 }} connectNulls={false} />)}
         </LineChart>
       </ResponsiveContainer>
@@ -132,6 +166,6 @@ export function IncomeChart({ rows, indicator, statistic, statisticLabel }: { ro
       const count = counts.get(code);
       return <li key={code} className={`chart__legend-item chart__legend-item--${code.toLowerCase()}`}>{names.get(code) ?? code} ({code}), {count === undefined ? "country count unavailable" : `${count} ${count === 1 ? "country" : "countries"}`}</li>;
     })}</ul>
-    <div className="table-scroll" role="region" aria-label={caption} tabIndex={0}><table className="data-table"><caption>{caption}</caption><thead><tr><th scope="col">Income group</th><th scope="col" className="num">Year</th><th scope="col" className="num">Value</th><th scope="col" className="num">Countries present</th><th scope="col" className="num">Countries selected</th></tr></thead><tbody>{rows.map((row) => <tr key={`${row.income_level_code}-${row.year}`}><th scope="row">{row.income_level}</th><td className="num">{row.year}</td><td className="num">{valueFor(indicator.indicator_code, row[statistic], true)}</td><td className="num">{row.countries_present}</td><td className="num">{row.country_count}</td></tr>)}</tbody></table></div>
+    <div className="table-scroll" role="region" aria-label={caption} tabIndex={0}><table className="data-table"><caption>{caption}</caption><thead><tr><th scope="col">Income group</th><th scope="col" className="num">Year</th><th scope="col" className="num">Value</th><th scope="col" className="num">Countries present</th><th scope="col" className="num">Countries selected</th></tr></thead>{groups.map((group, groupIndex) => <tbody key={`${group[0].income_level_code}-${groupIndex}`}>{group.map((row, index) => <tr key={`${row.income_level_code}-${row.year}`}>{index === 0 && <th scope="rowgroup" rowSpan={group.length} className="cell-head">{row.income_level}</th>}<td className="num">{row.year}</td><td className="num">{valueFor(indicator.indicator_code, row[statistic], true)}</td><td className="num">{row.countries_present}</td><td className="num">{row.country_count}</td></tr>)}</tbody>)}</table></div>
   </div>;
 }

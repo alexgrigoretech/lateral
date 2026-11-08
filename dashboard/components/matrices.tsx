@@ -20,9 +20,9 @@ export function Matrices({ matrices, indicators, compact = false }: { matrices: 
       return <div className={`matrix${compact ? " matrix--compact" : ""}`} key={matrix.indicator_code} tabIndex={0} role="region" aria-label={`${indicatorLabel(indicator)} completeness matrix`}>
         <table className="matrix__table">
           <caption>{indicatorLabel(indicator)} <span>{present} of {cells.length} present</span></caption>
-          <thead><tr><th scope="col">Country</th>{matrix.years.map((year) => <th scope="col" key={year}>{year}</th>)}</tr></thead>
+          <thead><tr><th scope="col">{compact ? <span className="visually-hidden">Country</span> : "Country"}</th>{matrix.years.map((year) => <th scope="col" key={year}>{compact ? <><span aria-hidden="true">{"\u2019" + String(year).slice(2)}</span><span className="visually-hidden">{year}</span></> : year}</th>)}</tr></thead>
           <tbody>{matrix.rows.map((row) => <tr key={row.country_iso3}>
-            <th scope="row"><Link href={`/country/${row.country_iso3}`}>{compact ? row.country_iso3 : row.country_name}</Link></th>
+            <th scope="row"><Link href={`/country/${row.country_iso3}`} title={compact ? row.country_name : undefined}>{compact ? row.country_iso3 : row.country_name}</Link></th>
             {row.cells.map((cell) => <td key={cell.year} className={`matrix__cell matrix__cell--${cell.status}`} title={`${row.country_name}, ${cell.year}: ${describeStatus(cell.status)}${cell.value === null ? "" : `, ${valueFor(indicator.indicator_code, cell.value)}`}`}>
               <span className="visually-hidden">{describeStatus(cell.status)}{cell.value === null ? "" : `: ${valueFor(indicator.indicator_code, cell.value)}`}</span>
             </td>)}

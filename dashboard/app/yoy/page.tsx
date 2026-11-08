@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ValueChart, YoyChart } from "@/components/charts";
 import { Selector } from "@/components/selectors";
@@ -6,6 +7,7 @@ import { selectedIndicator, type SearchParams } from "@/lib/page-params";
 import { getMeta, getYoy } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Year over year" };
 
 export default async function Yoy({ searchParams }: { searchParams: SearchParams }) {
   const [meta, params] = await Promise.all([getMeta(), searchParams]);

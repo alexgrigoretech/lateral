@@ -53,17 +53,25 @@ for (const route of ["/api/yoy?indicator=invalid", "/api/yoy", "/api/yoy?indicat
 
 for (const [route, expected] of [
   ["/brief", ["requirements in the brief", "Notes a reviewer will notice"]],
-  ["/brief/1-1", ["Retrieve metadata and observations", "wb_pipeline/client.py lines 152 to 160"]],
+  ["/brief/1-1", ["Retrieve metadata and observations", "wb_pipeline/client.py lines 152 to 160", 'aria-current="page">1.1 Retrieve metadata and observations']],
   ["/brief/3-4", ["Income groups by year", "rpt_income_group_by_year.sql"]],
   ["/brief/6-4", ["Git repository with commit history", 'class="brief-note"']],
   ["/brief/decisions", ["D18", "Applies to:"]],
   ["/brief/architecture", ["Year over year across a gap"]],
+  ["/missing", ["brief/3-1", "empty-state--clear"]],
+  ["/yoy", ["Year over year", 'scope="rowgroup"']],
+  ["/country/USA", ["United States"]],
+  ["/about", ["Grain and business key of each model"]],
 ]) {
   const response = await fetch(new URL(route, base));
   assert.equal(response.status, 200, `${route}: expected 200`);
   const body = (await response.text()).replace(/<!--[\s\S]*?-->/g, "");
   for (const text of expected) assert.ok(body.includes(text), `${route}: missing ${text}`);
   if (route === "/brief/architecture") assert.ok((body.match(/aria-label=/g) ?? []).length >= 6, `${route}: expected at least six aria-label attributes`);
+  if (route === "/brief/architecture") assert.ok(body.includes('aria-describedby="er-diagram-desc"'), `${route}: expected ER diagram description`);
+  if (route === "/yoy") assert.ok(!body.includes('<table class="visually-hidden"'), `${route}: hidden tables need a wrapper`);
+  if (route === "/country/USA") assert.match(body, /<title>[^<]*United States[^<]*<\/title>/, `${route}: expected country title`);
+  if (route === "/country/USA") assert.ok(body.includes("data-table--static-head"), `${route}: expected static table heads`);
   console.log(`PASS 200 ${route} page-specific content`);
 }
 
