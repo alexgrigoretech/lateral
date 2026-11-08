@@ -1,0 +1,192 @@
+[
+  {
+    "page": 1,
+    "pages": 1,
+    "per_page": "1000",
+    "total": 9,
+    "lastupdated": "2026-11-08",
+    "fixture_kind": "synthetic"
+  },
+  [
+    {
+      "id": "BRA",
+      "iso2Code": "T0",
+      "name": "Synthetic BRA",
+      "region": {
+        "id": "SYN",
+        "value": "Synthetic region "
+      },
+      "incomeLevel": {
+        "id": "UMC",
+        "value": "Synthetic income group"
+      },
+      "lendingType": {
+        "id": "SYN",
+        "value": "Synthetic lending type"
+      },
+      "capitalCity": "Synthetic capital",
+      "latitude": "1.5",
+      "longitude": "2.5"
+    },
+    {
+      "id": "CAN",
+      "iso2Code": "T1",
+      "name": "Synthetic CAN",
+      "region": {
+        "id": "SYN",
+        "value": "Synthetic region "
+      },
+      "incomeLevel": {
+        "id": "HIC",
+        "value": "Synthetic income group"
+      },
+      "lendingType": {
+        "id": "SYN",
+        "value": "Synthetic lending type"
+      },
+      "capitalCity": "Synthetic capital",
+      "latitude": "1.5",
+      "longitude": "2.5"
+    },
+    {
+      "id": "DEU",
+      "iso2Code": "T2",
+      "name": "Synthetic DEU",
+      "region": {
+        "id": "SYN",
+        "value": "Synthetic region "
+      },
+      "incomeLevel": {
+        "id": "UMC",
+        "value": "Synthetic income group"
+      },
+      "lendingType": {
+        "id": "SYN",
+        "value": "Synthetic lending type"
+      },
+      "capitalCity": "Synthetic capital",
+      "latitude": "1.5",
+      "longitude": "2.5"
+    },
+    {
+      "id": "GBR",
+      "iso2Code": "T3",
+      "name": "Synthetic GBR",
+      "region": {
+        "id": "SYN",
+        "value": "Synthetic region "
+      },
+      "incomeLevel": {
+        "id": "HIC",
+        "value": "Synthetic income group"
+      },
+      "lendingType": {
+        "id": "SYN",
+        "value": "Synthetic lending type"
+      },
+      "capitalCity": "Synthetic capital",
+      "latitude": "1.5",
+      "longitude": "2.5"
+    },
+    {
+      "id": "IND",
+      "iso2Code": "T4",
+      "name": "Synthetic IND",
+      "region": {
+        "id": "SYN",
+        "value": "Synthetic region "
+      },
+      "incomeLevel": {
+        "id": "UMC",
+        "value": "Synthetic income group"
+      },
+      "lendingType": {
+        "id": "SYN",
+        "value": "Synthetic lending type"
+      },
+      "capitalCity": "Synthetic capital",
+      "latitude": "1.5",
+      "longitude": "2.5"
+    },
+    {
+      "id": "JPN",
+      "iso2Code": "T5",
+      "name": "Synthetic JPN",
+      "region": {
+        "id": "SYN",
+        "value": "Synthetic region "
+      },
+      "incomeLevel": {
+        "id": "HIC",
+        "value": "Synthetic income group"
+      },
+      "lendingType": {
+        "id": "SYN",
+        "value": "Synthetic lending type"
+      },
+      "capitalCity": "Synthetic capital",
+      "latitude": "1.5",
+      "longitude": "2.5"
+    },
+    {
+      "id": "MEX",
+      "iso2Code": "T6",
+      "name": "Synthetic MEX",
+      "region": {
+        "id": "SYN",
+        "value": "Synthetic region "
+      },
+      "incomeLevel": {
+        "id": "UMC",
+        "value": "Synthetic income group"
+      },
+      "lendingType": {
+        "id": "SYN",
+        "value": "Synthetic lending type"
+      },
+      "capitalCity": "Synthetic capital",
+      "latitude": "1.5",
+      "longitude": "2.5"
+    },
+    {
+      "id": "USA",
+      "iso2Code": "T7",
+      "name": "Synthetic USA",
+      "region": {
+        "id": "SYN",
+        "value": "Synthetic region "
+      },
+      "incomeLevel": {
+        "id": "HIC",
+        "value": "Synthetic income group"
+      },
+      "lendingType": {
+        "id": "SYN",
+        "value": "Synthetic lending type"
+      },
+      "capitalCity": "Synthetic capital",
+      "latitude": "1.5",
+      "longitude": "2.5"
+    },
+    {
+      "id": "ZAF",
+      "iso2Code": "T8",
+      "name": "Synthetic ZAF",
+      "region": {
+        "id": "SYN",
+        "value": "Synthetic region "
+      },
+      "incomeLevel": {
+        "id": "UMC",
+        "value": "Synthetic income group"
+      },
+      "lendingType": {
+        "id": "SYN",
+        "value": "Synthetic lending type"
+      },
+      "capitalCity": "Synthetic capital",
+      "latitude": "1.5",
+      "longitude": "2.5"
+    }
+  ]
+]

@@ -1,0 +1,1004 @@
+[
+  {
+    "page": 1,
+    "pages": 1,
+    "per_page": "1000",
+    "total": 62,
+    "lastupdated": "2026-11-08",
+    "fixture_kind": "synthetic"
+  },
+  [
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T0",
+        "value": "Synthetic BRA"
+      },
+      "countryiso3code": "BRA",
+      "date": "2018",
+      "value": 1000,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T0",
+        "value": "Synthetic BRA"
+      },
+      "countryiso3code": "BRA",
+      "date": "2019",
+      "value": 1010,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T0",
+        "value": "Synthetic BRA"
+      },
+      "countryiso3code": "BRA",
+      "date": "2020",
+      "value": 1020,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T0",
+        "value": "Synthetic BRA"
+      },
+      "countryiso3code": "BRA",
+      "date": "2021",
+      "value": 1030,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T0",
+        "value": "Synthetic BRA"
+      },
+      "countryiso3code": "BRA",
+      "date": "2022",
+      "value": 1040,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T0",
+        "value": "Synthetic BRA"
+      },
+      "countryiso3code": "BRA",
+      "date": "2023",
+      "value": 1050,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T1",
+        "value": "Synthetic CAN"
+      },
+      "countryiso3code": "CAN",
+      "date": "2018",
+      "value": 1050,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T1",
+        "value": "Synthetic CAN"
+      },
+      "countryiso3code": "CAN",
+      "date": "2019",
+      "value": 1060,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T1",
+        "value": "Synthetic CAN"
+      },
+      "countryiso3code": "CAN",
+      "date": "2020",
+      "value": 1070,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T1",
+        "value": "Synthetic CAN"
+      },
+      "countryiso3code": "CAN",
+      "date": "2021",
+      "value": 1080,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T1",
+        "value": "Synthetic CAN"
+      },
+      "countryiso3code": "CAN",
+      "date": "2022",
+      "value": 1090,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T1",
+        "value": "Synthetic CAN"
+      },
+      "countryiso3code": "CAN",
+      "date": "2023",
+      "value": 1100,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T1",
+        "value": "Synthetic CAN"
+      },
+      "countryiso3code": "CAN",
+      "date": "2024",
+      "value": 1110,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T2",
+        "value": "Synthetic DEU"
+      },
+      "countryiso3code": "DEU",
+      "date": "2018",
+      "value": 1100,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T2",
+        "value": "Synthetic DEU"
+      },
+      "countryiso3code": "DEU",
+      "date": "2019",
+      "value": 1110,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T2",
+        "value": "Synthetic DEU"
+      },
+      "countryiso3code": "DEU",
+      "date": "2020",
+      "value": 1120,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T2",
+        "value": "Synthetic DEU"
+      },
+      "countryiso3code": "DEU",
+      "date": "2021",
+      "value": 1130,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T2",
+        "value": "Synthetic DEU"
+      },
+      "countryiso3code": "DEU",
+      "date": "2022",
+      "value": 1140,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T2",
+        "value": "Synthetic DEU"
+      },
+      "countryiso3code": "DEU",
+      "date": "2023",
+      "value": 1150,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T2",
+        "value": "Synthetic DEU"
+      },
+      "countryiso3code": "DEU",
+      "date": "2024",
+      "value": 1160,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T3",
+        "value": "Synthetic GBR"
+      },
+      "countryiso3code": "GBR",
+      "date": "2018",
+      "value": 1150,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T3",
+        "value": "Synthetic GBR"
+      },
+      "countryiso3code": "GBR",
+      "date": "2019",
+      "value": 1160,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T3",
+        "value": "Synthetic GBR"
+      },
+      "countryiso3code": "GBR",
+      "date": "2020",
+      "value": 1170,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T3",
+        "value": "Synthetic GBR"
+      },
+      "countryiso3code": "GBR",
+      "date": "2021",
+      "value": 1180,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T3",
+        "value": "Synthetic GBR"
+      },
+      "countryiso3code": "GBR",
+      "date": "2022",
+      "value": 1190,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T3",
+        "value": "Synthetic GBR"
+      },
+      "countryiso3code": "GBR",
+      "date": "2023",
+      "value": 1200,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T3",
+        "value": "Synthetic GBR"
+      },
+      "countryiso3code": "GBR",
+      "date": "2024",
+      "value": 1210,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T4",
+        "value": "Synthetic IND"
+      },
+      "countryiso3code": "IND",
+      "date": "2018",
+      "value": 1200,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T4",
+        "value": "Synthetic IND"
+      },
+      "countryiso3code": "IND",
+      "date": "2019",
+      "value": 1210,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T4",
+        "value": "Synthetic IND"
+      },
+      "countryiso3code": "IND",
+      "date": "2020",
+      "value": 1220,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T4",
+        "value": "Synthetic IND"
+      },
+      "countryiso3code": "IND",
+      "date": "2021",
+      "value": 1230,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T4",
+        "value": "Synthetic IND"
+      },
+      "countryiso3code": "IND",
+      "date": "2022",
+      "value": 1240,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T4",
+        "value": "Synthetic IND"
+      },
+      "countryiso3code": "IND",
+      "date": "2023",
+      "value": 1250,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T4",
+        "value": "Synthetic IND"
+      },
+      "countryiso3code": "IND",
+      "date": "2024",
+      "value": 1260,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T5",
+        "value": "Synthetic JPN"
+      },
+      "countryiso3code": "JPN",
+      "date": "2018",
+      "value": 1250,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T5",
+        "value": "Synthetic JPN"
+      },
+      "countryiso3code": "JPN",
+      "date": "2019",
+      "value": 1260,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T5",
+        "value": "Synthetic JPN"
+      },
+      "countryiso3code": "JPN",
+      "date": "2020",
+      "value": 1270,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T5",
+        "value": "Synthetic JPN"
+      },
+      "countryiso3code": "JPN",
+      "date": "2021",
+      "value": 1280,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T5",
+        "value": "Synthetic JPN"
+      },
+      "countryiso3code": "JPN",
+      "date": "2022",
+      "value": 1290,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T5",
+        "value": "Synthetic JPN"
+      },
+      "countryiso3code": "JPN",
+      "date": "2023",
+      "value": 1300,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T5",
+        "value": "Synthetic JPN"
+      },
+      "countryiso3code": "JPN",
+      "date": "2024",
+      "value": 1310,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T6",
+        "value": "Synthetic MEX"
+      },
+      "countryiso3code": "MEX",
+      "date": "2018",
+      "value": 1300,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T6",
+        "value": "Synthetic MEX"
+      },
+      "countryiso3code": "MEX",
+      "date": "2019",
+      "value": 1310,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T6",
+        "value": "Synthetic MEX"
+      },
+      "countryiso3code": "MEX",
+      "date": "2020",
+      "value": 1320,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T6",
+        "value": "Synthetic MEX"
+      },
+      "countryiso3code": "MEX",
+      "date": "2021",
+      "value": 1330,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T6",
+        "value": "Synthetic MEX"
+      },
+      "countryiso3code": "MEX",
+      "date": "2022",
+      "value": 1340,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T6",
+        "value": "Synthetic MEX"
+      },
+      "countryiso3code": "MEX",
+      "date": "2023",
+      "value": 1350,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T6",
+        "value": "Synthetic MEX"
+      },
+      "countryiso3code": "MEX",
+      "date": "2024",
+      "value": 1360,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T7",
+        "value": "Synthetic USA"
+      },
+      "countryiso3code": "USA",
+      "date": "2018",
+      "value": 1350,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T7",
+        "value": "Synthetic USA"
+      },
+      "countryiso3code": "USA",
+      "date": "2019",
+      "value": 1360,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T7",
+        "value": "Synthetic USA"
+      },
+      "countryiso3code": "USA",
+      "date": "2020",
+      "value": 1370,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T7",
+        "value": "Synthetic USA"
+      },
+      "countryiso3code": "USA",
+      "date": "2021",
+      "value": 1380,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T7",
+        "value": "Synthetic USA"
+      },
+      "countryiso3code": "USA",
+      "date": "2022",
+      "value": 1390,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T7",
+        "value": "Synthetic USA"
+      },
+      "countryiso3code": "USA",
+      "date": "2023",
+      "value": 1400,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T7",
+        "value": "Synthetic USA"
+      },
+      "countryiso3code": "USA",
+      "date": "2024",
+      "value": 1410,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T8",
+        "value": "Synthetic ZAF"
+      },
+      "countryiso3code": "ZAF",
+      "date": "2018",
+      "value": 1400,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T8",
+        "value": "Synthetic ZAF"
+      },
+      "countryiso3code": "ZAF",
+      "date": "2019",
+      "value": 1410,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T8",
+        "value": "Synthetic ZAF"
+      },
+      "countryiso3code": "ZAF",
+      "date": "2020",
+      "value": 1420,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T8",
+        "value": "Synthetic ZAF"
+      },
+      "countryiso3code": "ZAF",
+      "date": "2021",
+      "value": 1430,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T8",
+        "value": "Synthetic ZAF"
+      },
+      "countryiso3code": "ZAF",
+      "date": "2022",
+      "value": 1440,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T8",
+        "value": "Synthetic ZAF"
+      },
+      "countryiso3code": "ZAF",
+      "date": "2023",
+      "value": 1450,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    },
+    {
+      "indicator": {
+        "id": "NY.GDP.PCAP.CD",
+        "value": "Synthetic NY.GDP.PCAP.CD"
+      },
+      "country": {
+        "id": "T8",
+        "value": "Synthetic ZAF"
+      },
+      "countryiso3code": "ZAF",
+      "date": "2024",
+      "value": 1460,
+      "unit": "",
+      "obs_status": "",
+      "decimal": 1
+    }
+  ]
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "http_status": 503,
+    "body": "Synthetic temporary failure"
+  },
+  {
+    "http_status": 200,
+    "body": [
+      {
+        "page": 1,
+        "pages": 1,
+        "total": 0
+      },
+      []
+    ]
+  }
+]
