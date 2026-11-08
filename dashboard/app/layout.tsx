@@ -25,8 +25,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en">
       <body>
         <a className="visually-hidden" href="#main-content">Skip to content</a>
-        <header className="site-header"><Drawer sections={getSections()} subsections={getSubsections().map(({ id, section, number, title, status }) => ({ id, section, number, title, status }))} /><Link href="/" className="site-header__brand">World Bank country indicators</Link><Navigation /></header>
-        <main className="site-main" id="main-content">{children}</main>
+        <header className="site-header"><Drawer sections={getSections()} subsections={getSubsections().map(({ id, section, number, title, status }) => ({ id, section, number, title, status }))} /><Link href="/" className="site-header__brand" id="site-brand">World Bank country indicators</Link><Navigation /></header>
+        <main className="site-main" id="main-content" tabIndex={-1}>{children}</main>
         <footer className="site-footer"><p>Pipeline run: {runId ?? "Not available"}</p><p>Source: World Bank Indicators API</p></footer>
       </body>
     </html>

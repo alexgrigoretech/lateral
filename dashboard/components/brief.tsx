@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { counts, getSnippet, getSubsection, githubUrl, neighbours, type Decision, type Snippet, type Status, type Subsection, type Verify } from "@/lib/brief";
+import { CopyButton } from "@/components/copy-button";
+import { DiagramById } from "@/components/diagrams";
+import { counts, getSnippet, getSubsection, githubUrl, neighbours, type Decision, type Diagram, type Snippet, type Status, type Subsection, type Verify } from "@/lib/brief";
 
 export function StatusChip({ status }: { status: Status }) {
   return <span className={`status-chip status-chip--${status}`}>{status === "met" ? "Met" : "Met, with a note"}</span>;
@@ -15,7 +17,12 @@ export function RequirementRow({ subsection }: { subsection: Subsection }) {
 }
 
 export function CodeSample({ snippet }: { snippet: Snippet }) {
-  return <figure className="code-sample"><figcaption className="code-sample__head"><span className="code-sample__path">{snippet.file} lines {snippet.start} to {snippet.end}</span><a className="code-sample__link" href={githubUrl(snippet.file, snippet.start, snippet.end)} target="_blank" rel="noreferrer">View on GitHub</a></figcaption><pre className="code-sample__pre" data-lang={snippet.lang}><code>{getSnippet(snippet).code}</code></pre><p className="code-sample__caption">{snippet.caption}</p></figure>;
+  return <figure className="code-sample"><figcaption className="code-sample__head"><span className="code-sample__path">{snippet.file} lines {snippet.start} to {snippet.end}</span><a className="code-sample__link" href={githubUrl(snippet.file, snippet.start, snippet.end)} target="_blank" rel="noreferrer">View on GitHub</a></figcaption><p className="code-sample__caption">{snippet.caption}</p><pre className="code-sample__pre" tabIndex={0} role="region" aria-label={`Code from ${snippet.file}, lines ${snippet.start} to ${snippet.end}`} data-lang={snippet.lang}><code>{getSnippet(snippet).code}</code></pre></figure>;
+}
+
+export function DiagramFigure({ diagram }: { diagram: Diagram }) {
+  const caption = diagram.id === "er" ? `${diagram.caption} Three short lines mark a many end; circles mark an optional source record.` : diagram.caption;
+  return <figure className="diagram"><figcaption className="diagram__title">{diagram.title}</figcaption><div className="diagram__scroll" tabIndex={0} role="region" aria-label={`${diagram.title} diagram, scrolls sideways on narrow screens`}><DiagramById id={diagram.id} /></div><p className="diagram__caption">{caption}<span className="diagram__hint"> Scroll sideways to see the whole diagram.</span></p></figure>;
 }
 
 export function DecisionCard({ decision, references = false }: { decision: Decision; references?: boolean }) {
@@ -31,13 +38,13 @@ export function DecisionCard({ decision, references = false }: { decision: Decis
 }
 
 export function VerifyBlock({ verify }: { verify: Verify }) {
-  return <div className="verify"><pre className="verify__cmd"><code>{verify.cmd}</code></pre><p className="verify__expect">{verify.expect}</p></div>;
+  return <div className="verify"><pre className="verify__cmd" tabIndex={0} role="region" aria-label="Command to run"><code>{verify.cmd}</code></pre><div className="verify__actions"><CopyButton value={verify.cmd} label="command" /></div><p className="verify__expect">{verify.expect}</p></div>;
 }
 
 export function Pager({ id }: { id: string }) {
   const { previous, next } = neighbours(id);
   return <nav className="pager-nav" aria-label="Previous and next">
-    {previous && <Link className="pager-nav__link pager-nav__link--prev" href={`/brief/${previous.id}`}><span className="pager-nav__dir">Previous</span><span className="pager-nav__title">{previous.number} {previous.title}</span></Link>}
-    {next && <Link className="pager-nav__link pager-nav__link--next" href={`/brief/${next.id}`}><span className="pager-nav__dir">Next</span><span className="pager-nav__title">{next.number} {next.title}</span></Link>}
+    <Link className="pager-nav__link pager-nav__link--prev" href={previous ? `/brief/${previous.id}` : "/brief"}><span className="pager-nav__dir">← Previous</span><span className="pager-nav__title">{previous ? `${previous.number} ${previous.title}` : "Brief walkthrough"}</span></Link>
+    <Link className="pager-nav__link pager-nav__link--next" href={next ? `/brief/${next.id}` : "/brief/decisions"}><span className="pager-nav__dir">Next →</span><span className="pager-nav__title">{next ? `${next.number} ${next.title}` : "Decision log"}</span></Link>
   </nav>;
 }

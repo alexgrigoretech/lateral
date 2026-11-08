@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { IncomeChart } from "@/components/charts";
 import { Selector } from "@/components/selectors";
@@ -6,6 +7,7 @@ import { getIncomeGroups, getMeta } from "@/lib/queries";
 import { INCOME_ORDER } from "@/lib/tokens";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Income groups" };
 
 export default async function IncomeGroups({ searchParams }: { searchParams: SearchParams }) {
   const [meta, params] = await Promise.all([getMeta(), searchParams]);

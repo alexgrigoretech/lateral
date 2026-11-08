@@ -1,8 +1,8 @@
 import { useId, type ReactNode } from "react";
 
-function Canvas({ id, height, label, children }: { id: string; height: number; label: string; children: (marker: string) => ReactNode }) {
+function Canvas({ id, height, label, describedBy, children }: { id: string; height: number; label: string; describedBy?: string; children: (marker: string) => ReactNode }) {
   const marker = `${id}-arrow-${useId().replaceAll(":", "")}`;
-  return <svg width="100%" viewBox={`0 0 960 ${height}`} role="img" aria-label={label} fontSize="13" style={{ fontFamily: "var(--font)" }}>
+  return <svg width="100%" viewBox={`0 0 960 ${height}`} role="img" aria-label={label} aria-describedby={describedBy} fontSize="13" style={{ fontFamily: "var(--font)" }}>
     <defs><marker id={marker} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="var(--accent-wash)" stroke="var(--accent)" /></marker></defs>
     {children(marker)}
   </svg>;
@@ -12,8 +12,8 @@ function Box({ x, y, width, height, title, lines = [], accent = false, pill = fa
   return <g><rect x={x} y={y} width={width} height={height} rx={pill ? height / 2 : 8} fill={accent ? "var(--accent-wash)" : "var(--surface-2)"} stroke="var(--rule)" /><text x={x + 12} y={lines.length ? y + 25 : y + height / 2 + 5} fill="var(--ink)">{title}</text>{lines.map((line, index) => <text key={index} x={x + 12} y={y + 49 + index * 21} fill="var(--ink-2)">{line}</text>)}</g>;
 }
 
-function Arrow({ d, marker }: { d: string; marker: string }) {
-  return <path d={d} fill="none" stroke="var(--accent)" strokeWidth="1.5" markerEnd={`url(#${marker})`} />;
+function Arrow({ d, marker }: { d: string; marker?: string }) {
+  return <path d={d} fill="none" stroke="var(--accent)" strokeWidth="1.5" markerEnd={marker ? `url(#${marker})` : undefined} />;
 }
 
 function Diamond({ cx, cy, width, height, lines }: { cx: number; cy: number; width: number; height: number; lines: string[] }) {
@@ -93,18 +93,18 @@ function Many({ x, y, dx, dy }: { x: number; y: number; dx: number; dy: number }
 }
 
 export function ErDiagram() {
-  return <Canvas id="er" height={1020} label="Entity relationships from runs and API pages through sightings, source rows, dimensions and configuration spine to the indicator year fact, with crow's feet at many ends">{(marker) => <>
-    <Arrow d="M 180 90 V 245 H 330" marker={marker} /><Many x={330} y={245} dx={-1} dy={0} />
-    <Arrow d="M 470 150 V 205" marker={marker} /><Many x={470} y={205} dx={0} dy={-1} />
-    <Arrow d="M 390 150 V 175 H 155 V 330" marker={marker} /><Many x={155} y={330} dx={0} dy={-1} />
-    <Arrow d="M 550 150 V 175 H 785 V 330" marker={marker} /><Many x={785} y={330} dx={0} dy={-1} />
-    <Arrow d="M 470 285 V 330" marker={marker} /><Many x={470} y={330} dx={0} dy={-1} />
-    <Arrow d="M 155 430 V 525" marker={marker} /><Many x={155} y={430} dx={0} dy={1} />
-    <Arrow d="M 785 430 V 525" marker={marker} /><Many x={785} y={430} dx={0} dy={1} />
-    <Arrow d="M 300 565 H 325 V 790 H 350" marker={marker} /><Many x={350} y={790} dx={-1} dy={0} />
-    <Arrow d="M 640 565 H 620 V 790 H 590" marker={marker} /><Many x={590} y={790} dx={1} dy={0} />
-    <Arrow d="M 470 625 V 710" marker={marker} /><path d="M 463 694 H 477 M 463 700 H 477 M 463 640 H 477 M 463 646 H 477" stroke="var(--accent)" />
-    <Arrow d="M 470 430 V 455 H 935 V 850 H 590" marker={marker} />
+  return <><Canvas id="er" height={900} label="Entity relationships from runs and API pages through sightings, source rows, dimensions and configuration spine to the indicator year fact, with crow's feet at many ends" describedBy="er-diagram-desc">{() => <>
+    <Arrow d="M 180 90 V 245 H 330" /><Many x={330} y={245} dx={-1} dy={0} />
+    <Arrow d="M 470 150 V 205" /><Many x={470} y={205} dx={0} dy={-1} />
+    <Arrow d="M 390 150 V 175 H 155 V 330" /><Many x={155} y={330} dx={0} dy={-1} />
+    <Arrow d="M 550 150 V 175 H 785 V 330" /><Many x={785} y={330} dx={0} dy={-1} />
+    <Arrow d="M 470 285 V 330" /><Many x={470} y={330} dx={0} dy={-1} />
+    <Arrow d="M 155 430 V 525" /><Many x={155} y={430} dx={0} dy={1} />
+    <Arrow d="M 785 430 V 525" /><Many x={785} y={430} dx={0} dy={1} />
+    <Arrow d="M 300 565 H 325 V 790 H 350" /><Many x={350} y={790} dx={-1} dy={0} />
+    <Arrow d="M 640 565 H 620 V 790 H 590" /><Many x={590} y={790} dx={1} dy={0} />
+    <Arrow d="M 470 625 V 710" /><path d="M 463 694 H 477 M 463 700 H 477 M 463 640 H 477 M 463 646 H 477" stroke="var(--accent)" />
+    <Arrow d="M 470 430 V 455 H 935 V 850 H 590" />
     <circle cx="905" cy="455" r="4" fill="var(--surface-2)" stroke="var(--accent)" /><path d="M 895 448 V 462" stroke="var(--accent)" />
     <circle cx="612" cy="850" r="4" fill="var(--surface-2)" stroke="var(--accent)" /><path d="M 623 843 V 857" stroke="var(--accent)" />
     <Box x={40} y={20} width={280} height={70} title="RUNS" lines={["run_id"]} />
@@ -116,9 +116,8 @@ export function ErDiagram() {
     <Box x={20} y={525} width={280} height={80} title="DIM_COUNTRY" lines={["country_iso3"]} />
     <Box x={330} y={490} width={280} height={135} title="CONFIG_SPINE" lines={["country_iso3", "indicator_code", "year"]} />
     <Box x={640} y={525} width={280} height={80} title="DIM_INDICATOR" lines={["indicator_code"]} />
-    <Box x={350} y={710} width={240} height={215} title="FCT_INDICATOR_YEAR" lines={["country_iso3", "indicator_code", "year", "status", "source_page_id", "source_row_index"]} accent />
-    <text x="35" y="975" fill="var(--ink-2)">Three short lines mark a many end; circles mark an optional source record.</text>
-  </>}</Canvas>;
+    <Box x={350} y={710} width={240} height={170} title="FCT_INDICATOR_YEAR" lines={["country_iso3", "indicator_code", "year", "status", "source_page_id", "source_row_index"]} accent />
+  </>}</Canvas><p id="er-diagram-desc" className="visually-hidden">Runs record many page sightings. API pages are observed in many page sightings. API pages contain many country rows and indicator meta rows. Page sightings link to many observation rows. Many country rows supply metadata to one dim_country row, and many indicator meta rows supply metadata to one dim_indicator row. Each dim_country row and each dim_indicator row identifies many fct_indicator_year rows. Config_spine defines exactly one fct_indicator_year row per key. A fact row has at most one latest observation row, and an observation row is the latest source for at most one fact row.</p></>;
 }
 
 export function YoyDiagram() {

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CodeSample, DecisionCard, Pager, StatusChip, VerifyBlock } from "@/components/brief";
-import { DiagramById } from "@/components/diagrams";
+import { CodeSample, DecisionCard, DiagramFigure, Pager, StatusChip, VerifyBlock } from "@/components/brief";
 import { getDecision, getDiagrams, getSections, getSubsection, getSubsections } from "@/lib/brief";
 
 export const dynamic = "force-static";
@@ -22,16 +21,18 @@ export default async function BriefSubsection({ params }: Props) {
   if (!item) notFound();
   const section = getSections().find((entry) => entry.number === item.section)!;
   return <div className="page">
-    <nav className="brief-page__crumbs" aria-label="Breadcrumb"><Link href="/brief">Brief walkthrough</Link>{" / "}<span>{section.number} {section.title}</span>{" / "}<span>{item.number}</span></nav>
-    <header><h1 className="page__title"><span className="brief-row__num">{item.number}</span>{item.title}</h1><StatusChip status={item.status} /></header>
-    <blockquote className="brief-page__quote"><p>{item.requirement}</p><footer>From the assessment brief, section {section.number} {section.title}</footer></blockquote>
-    <p className="page__lede">{item.summary}</p>
-    {item.note && <aside className="brief-note" role="note"><p className="brief-note__label">Note</p><p>{item.note}</p></aside>}
+    <header className="brief-page__head">
+      <nav className="brief-page__crumbs" aria-label="Breadcrumb"><Link href="/brief">Brief walkthrough</Link><Link href={`/brief#section-${section.number}`}>{section.number} {section.title}</Link><span aria-current="page">{item.number} {item.title}</span></nav>
+      <h1 className="page__title"><span className="brief-row__num">{item.number}</span>{item.title}</h1><StatusChip status={item.status} />
+      <blockquote className="brief-page__quote"><p>{item.requirement}</p><footer>From the assessment brief, section {section.number} {section.title}</footer></blockquote>
+      <p className="page__lede">{item.summary}</p>
+      {item.note && <aside className="brief-note" role="note"><p className="brief-note__label">Note</p><p>{item.note}</p></aside>}
+    </header>
     <section className="section"><h2 className="section__title">How it is met</h2>{item.details.map((detail) => <p key={detail}>{detail}</p>)}</section>
     {item.snippets.length > 0 && <section className="section"><h2 className="section__title">Code</h2>{item.snippets.map((snippet) => <CodeSample key={`${snippet.file}#${snippet.start}-${snippet.end}`} snippet={snippet} />)}</section>}
     {item.diagrams.length > 0 && <section className="section"><h2 className="section__title">Diagram</h2>{item.diagrams.map((id) => {
       const diagram = getDiagrams().find((entry) => entry.id === id)!;
-      return <figure className="diagram" key={id}><figcaption className="diagram__title">{diagram.title}</figcaption><DiagramById id={id} /><p className="diagram__caption">{diagram.caption}</p></figure>;
+      return <DiagramFigure key={id} diagram={diagram} />;
     })}</section>}
     {item.decisions.length > 0 && <section className="section"><h2 className="section__title">Decisions</h2>{item.decisions.map((id) => <DecisionCard key={id} decision={getDecision(id)!} />)}</section>}
     {item.live.length > 0 && <section className="section"><h2 className="section__title">See it live</h2><ul className="brief-live">{item.live.map((live) => <li key={live.href}><Link href={live.href}>{live.label}</Link></li>)}</ul></section>}
