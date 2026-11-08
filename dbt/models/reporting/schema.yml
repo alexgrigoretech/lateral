@@ -1,0 +1,169 @@
+version: 2
+models:
+  - name: rpt_missing_data
+    description: "Every configured observation with an explicit null or absent source record."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [country_iso3, indicator_code, year]
+    columns:
+      - name: country_iso3
+        description: "Natural country key."
+        data_tests:
+          - not_null
+      - name: country_name
+        description: "Source country name."
+      - name: indicator_code
+        description: "Natural indicator key."
+        data_tests:
+          - not_null
+      - name: label
+        description: "Configured display label."
+      - name: year
+        description: "Configured year."
+        data_tests:
+          - not_null
+      - name: status
+        description: "Missingness reason from the fact table."
+  - name: rpt_completeness_by_country_indicator
+    description: "Completeness across the configured year interval."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [country_iso3, indicator_code]
+    columns:
+      - name: country_iso3
+        description: "Natural country key."
+        data_tests:
+          - not_null
+      - name: indicator_code
+        description: "Natural indicator key."
+        data_tests:
+          - not_null
+      - name: expected_years
+        description: "Number of configured years."
+      - name: present_years
+        description: "Number of nonnull observations."
+      - name: missing_years
+        description: "Number of null or absent observations."
+      - name: completeness_pct
+        description: "Present years divided by expected years, expressed as a percentage."
+      - name: first_year_present
+        description: "Earliest present observation year, null when none exists."
+      - name: last_year_present
+        description: "Latest present observation year, null when none exists."
+  - name: rpt_yoy_change
+    description: "Annual changes over the full spine, with explicit reasons for unavailable percentages."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [country_iso3, indicator_code, year]
+    columns:
+      - name: country_iso3
+        description: "Natural country key."
+        data_tests:
+          - not_null
+      - name: indicator_code
+        description: "Natural indicator key."
+        data_tests:
+          - not_null
+      - name: year
+        description: "Current configured year."
+        data_tests:
+          - not_null
+      - name: value
+        description: "Current nullable value."
+      - name: prior_year
+        description: "Immediately preceding configured year, null at the start."
+      - name: prior_value
+        description: "Nullable value for the immediately preceding year."
+      - name: abs_change
+        description: "Current value minus prior value when both exist."
+      - name: pct_change
+        description: "Percentage change, available only when yoy_status is ok."
+      - name: yoy_status
+        description: "First year takes precedence, followed by current_missing, prior_missing, prior_zero and ok."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [ok, prior_missing, prior_zero, current_missing, first_year]
+  - name: rpt_latest_year_comparison
+    description: "Countries compared at the latest year with any present value for each indicator."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [country_iso3, indicator_code]
+    columns:
+      - name: country_iso3
+        description: "Natural country key."
+        data_tests:
+          - not_null
+      - name: indicator_code
+        description: "Natural indicator key."
+        data_tests:
+          - not_null
+      - name: year
+        description: "Latest year with at least one present value for this indicator."
+      - name: value
+        description: "Country value at the common comparison year, possibly null."
+      - name: rank
+        description: "Descending rank among present values, with tied ranks and null for missing values."
+      - name: share_of_total
+        description: "Fraction of the selected countries present total for additive indicators only."
+  - name: rpt_latest_available_per_country
+    description: "Latest present value for each country and indicator, allowing different years."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [country_iso3, indicator_code]
+    columns:
+      - name: country_iso3
+        description: "Natural country key."
+        data_tests:
+          - not_null
+      - name: indicator_code
+        description: "Natural indicator key."
+        data_tests:
+          - not_null
+      - name: year
+        description: "Latest present year, null when all years are missing."
+      - name: value
+        description: "Value in the latest present year, null when all years are missing."
+  - name: rpt_income_group_by_year
+    description: "Selected countries grouped by current income classification and calendar year."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [indicator_code, income_level_code, year]
+    columns:
+      - name: indicator_code
+        description: "Natural indicator key."
+        data_tests:
+          - not_null
+      - name: income_level_code
+        description: "Current source income classification code, UNK when unavailable."
+        data_tests:
+          - not_null
+      - name: income_level
+        description: "Current source income classification name, Unknown when unavailable."
+      - name: year
+        description: "Configured calendar year."
+        data_tests:
+          - not_null
+      - name: country_count
+        description: "Number of configured countries in the group."
+      - name: countries_present
+        description: "Number of countries with a present value."
+      - name: sum_value
+        description: "Sum of present values for additive indicators only, null when no values exist."
+      - name: avg_value
+        description: "Unweighted mean of present country values."
+      - name: median_value
+        description: "Median of present country values."
+      - name: population_weighted_avg
+        description: "Mean of present values weighted by same year population for per capita GDP and life expectancy, null if any population weight is unavailable or nonpositive."
+      - name: min_value
+        description: "Minimum present country value."
+      - name: max_value
+        description: "Maximum present country value."

@@ -1,0 +1,104 @@
+version: 2
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: runs
+      - name: api_pages
+      - name: page_sightings
+      - name: country_rows
+      - name: indicator_meta_rows
+      - name: observation_rows
+      - name: config_spine
+models:
+  - name: stg_countries
+    description: "Latest country metadata by ISO3, ordered by page sighting time."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [country_iso3]
+    columns:
+      - name: country_iso3
+        description: "World Bank ISO3 country key."
+        data_tests:
+          - not_null
+          - unique
+      - name: country_iso2
+        description: "World Bank ISO2 country code."
+      - name: country_name
+        description: "Trimmed country name."
+      - name: income_level_code
+        description: "Current source income classification code."
+      - name: income_level_name
+        description: "Current source income classification name."
+      - name: region_code
+        description: "Source region code."
+      - name: region_name
+        description: "Trimmed source region name."
+      - name: lending_type
+        description: "Source lending classification."
+      - name: capital_city
+        description: "Trimmed capital city name."
+      - name: latitude
+        description: "Capital latitude parsed as a nullable number."
+      - name: longitude
+        description: "Capital longitude parsed as a nullable number."
+      - name: page_id
+        description: "Content identifier of the source page."
+  - name: stg_indicators
+    description: "Latest indicator metadata by indicator code, ordered by page sighting time."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [indicator_code]
+    columns:
+      - name: indicator_code
+        description: "Natural indicator key."
+        data_tests:
+          - not_null
+          - unique
+      - name: name
+        description: "Trimmed official source name."
+      - name: unit
+        description: "Trimmed source unit."
+      - name: source_note
+        description: "Source methodology and definition."
+      - name: source_organization
+        description: "Source organization attribution."
+      - name: page_id
+        description: "Content identifier of the source page."
+  - name: stg_observations
+    description: "Latest source observation per country, indicator and year, including explicit nulls."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [country_iso3, indicator_code, year]
+    columns:
+      - name: country_iso3
+        description: "Natural country key."
+        data_tests:
+          - not_null
+      - name: indicator_code
+        description: "Natural indicator key."
+        data_tests:
+          - not_null
+      - name: year
+        description: "Observation calendar year."
+        data_tests:
+          - not_null
+      - name: value
+        description: "Nullable source numeric value."
+      - name: obs_status
+        description: "Trimmed source observation status."
+      - name: unit
+        description: "Trimmed source unit."
+      - name: decimal
+        description: "Source decimal precision metadata."
+      - name: source_lastupdated
+        description: "Source release date on the response metadata."
+      - name: page_id
+        description: "Content identifier of the source page."
+      - name: row_index
+        description: "Zero based index of the record within its page."
+      - name: fetched_at
+        description: "UTC timestamp of the most recent eligible page sighting."

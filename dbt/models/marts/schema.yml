@@ -1,0 +1,112 @@
+version: 2
+models:
+  - name: dim_country
+    description: "Configured countries with the latest available source attributes."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [country_iso3]
+    columns:
+      - name: country_iso3
+        description: "Natural country key from the configuration spine."
+        data_tests:
+          - not_null
+          - unique
+      - name: country_iso2
+        description: "World Bank ISO2 country code."
+      - name: country_name
+        description: "Trimmed official country name."
+      - name: income_level_code
+        description: "Latest source income group code, not a historical classification."
+      - name: income_level_name
+        description: "Latest source income group name, not a historical classification."
+      - name: region_code
+        description: "Source region code."
+      - name: region_name
+        description: "Trimmed source region name."
+      - name: lending_type
+        description: "Source lending classification."
+      - name: capital_city
+        description: "Source capital city name."
+      - name: latitude
+        description: "Nullable capital latitude."
+      - name: longitude
+        description: "Nullable capital longitude."
+      - name: source_page_id
+        description: "Source country metadata content identifier."
+  - name: dim_indicator
+    description: "Configured indicators with source metadata and analytical attributes."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [indicator_code]
+    columns:
+      - name: indicator_code
+        description: "Natural configured indicator key."
+        data_tests:
+          - not_null
+          - unique
+      - name: name
+        description: "Official source indicator name."
+      - name: unit
+        description: "Source unit text."
+      - name: label
+        description: "Display label from configuration."
+      - name: category
+        description: "Configured population, economy or health category."
+      - name: is_additive
+        description: "True for total population and total GDP only."
+      - name: source_note
+        description: "Source methodology and definition."
+      - name: source_organization
+        description: "Source attribution."
+      - name: source_page_id
+        description: "Source indicator metadata content identifier."
+  - name: fct_indicator_year
+    description: "One row for every configured country, indicator and year, including missing outcomes."
+    data_tests:
+      - business_key:
+          arguments:
+            columns: [country_iso3, indicator_code, year]
+    columns:
+      - name: country_iso3
+        description: "Natural country key referencing dim_country."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_country')
+                field: country_iso3
+      - name: indicator_code
+        description: "Natural indicator key referencing dim_indicator."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_indicator')
+                field: indicator_code
+      - name: year
+        description: "Configured calendar year."
+        data_tests:
+          - not_null
+      - name: value
+        description: "Nullable source observation value. Missing values remain null."
+      - name: status
+        description: "Present for numeric values, null_value for explicit source nulls, not_returned for absent records."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [present, null_value, not_returned]
+      - name: is_missing
+        description: "True when value is null."
+      - name: source_page_id
+        description: "Source page content identifier, null when the record was not returned."
+      - name: source_row_index
+        description: "Zero based source row index, null for absent records."
+      - name: source_lastupdated
+        description: "Source release date from response metadata."
+      - name: fetched_at
+        description: "Most recent eligible page sighting timestamp, null for absent records."
+      - name: loaded_at
+        description: "UTC warehouse build timestamp."
