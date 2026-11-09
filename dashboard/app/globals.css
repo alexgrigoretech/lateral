@@ -508,7 +508,7 @@ a.visually-hidden:focus {
 .status-word--warn { color: var(--warn); font-weight: 500; }
 .status-word--muted { color: var(--ink-3); }
 
-.data-table button, .copy-button {
+.data-table button, .copy-button, .button {
   appearance: none;
   border: 1px solid var(--control-border);
   background: var(--surface);
@@ -519,7 +519,7 @@ a.visually-hidden:focus {
   font-size: 13px;
   cursor: pointer;
 }
-.data-table button:hover, .copy-button:hover { border-color: var(--rule); color: var(--ink); }
+.data-table button:hover, .copy-button:hover, .button:hover { border-color: var(--rule); color: var(--ink); }
 
 /* Empty state */
 .empty-state {
@@ -650,7 +650,7 @@ body[data-drawer-open="true"] { overflow: hidden; }
 .drawer__head {
   position: sticky;
   top: 0;
-  min-height: var(--drawer-head-h, 56px);
+  height: var(--drawer-head-h, 64px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -687,7 +687,7 @@ body[data-drawer-open="true"] { overflow: hidden; }
 }
 .drawer__section {
   position: sticky;
-  top: var(--drawer-head-h, 56px);
+  top: var(--drawer-head-h, 64px);
   z-index: 1;
   display: flex;
   align-items: baseline;
@@ -869,7 +869,7 @@ body[data-drawer-open="true"] { overflow: hidden; }
 .decision dl { margin: 12px 0 0; display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 8px 16px; }
 .decision__field { display: contents; }
 .decision__label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); padding-top: 3px; }
-.decision dd { margin: 0; color: var(--ink); font-size: 14.5px; }
+.decision dd { margin: 0; color: var(--ink); font-size: 15px; }
 .decision dd ul { padding-left: 1.1em; display: flex; flex-direction: column; gap: 2px; }
 .decision__refs { margin-top: 12px; font-size: 13px; color: var(--ink-2); }
 .decision__refs a { margin-right: 0; }
@@ -990,10 +990,10 @@ body[data-drawer-open="true"] { overflow: hidden; }
 @media (max-width: 640px) { .decision-index ol { columns: 1; } }
 
 @media (pointer: coarse) {
-  .drawer__panel { --drawer-head-h: 68px; }
+  .drawer__panel { --drawer-head-h: 72px; }
   .menu-button { width: 44px; height: 44px; }
   .drawer__close { width: 44px; height: 44px; }
-  .drawer__link, .segmented__option, .chart__legend button, .data-table button, .copy-button, .lineage__row button { min-height: 44px; }
+  .drawer__link, .segmented__option, .chart__legend button, .data-table button, .copy-button, .button, .lineage__row button { min-height: 44px; }
 }
 
 /* Round 3 design (spec by the uiux agent on Opus, 2026-11-08): quiet the normal, show the exception */
@@ -1132,17 +1132,4 @@ body[data-drawer-open="true"] { overflow: hidden; }
 .table-scroll > .data-table { background: transparent; }
 /* export catalogue: the filters column keeps one size whether or not a cell is muted */
 .export-datasets .status-word { font-size: inherit; }
-/* the one button outside tables (error page): same control style as the copy buttons */
-.button {
-  appearance: none;
-  border: 1px solid var(--control-border);
-  background: var(--surface);
-  color: var(--ink);
-  padding: 6px 14px;
-  min-height: 32px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.button:hover { border-color: var(--ink-3); background: var(--surface-2); }
+/* .button (error page) shares the copy button recipe above */
