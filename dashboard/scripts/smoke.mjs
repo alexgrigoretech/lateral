@@ -63,6 +63,7 @@ for (const [route, expected] of [
   ["/yoy", ["Year over year", 'scope="rowgroup"']],
   ["/country/USA", ["United States"]],
   ["/about", ["Grain and business key of each model"]],
+  ["/playground", ["Try the API", "All routes", "/api/health"]],
 ]) {
   const response = await fetch(new URL(route, base));
   assert.equal(response.status, 200, `${route}: expected 200`);

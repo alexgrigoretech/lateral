@@ -73,6 +73,9 @@ type:
   body:
     family: "IBM Plex Sans"
     weights: [400, 500, 600]
+  mono:
+    family: "ui-monospace, Cascadia Mono, Consolas, monospace"
+    weights: [400]
   scale:
     xs: 12
     sm: 13
@@ -157,6 +160,7 @@ Plain reporting voice, addressed to you, the reader checking the pipeline. The c
 
 ## Decisions
 
+- 2026-11-09: API playground page (/playground), direction A "one console" chosen by Alex from three plans (shape document `.scratch/design-shape-playground.md`): the response frame is the bold element on that page, marked by the 3px accent left rule the brief pages already use for quotes and commands; the Run button is the one filled button on the site, in ink on the page colour like the active segmented option; `type.mono` added for the stack the code samples already used; a native select is used for the ten export datasets (a segmented control with ten long names would wrap into four rows). The favicon is the completeness matrix (eight accent cells and one ringed null cell on the page colour), replacing the Next.js default.
 - 2026-11-09: design round 2: 16, 18 and 20 added to the type scale as the sizes the lede, the empty state title and the drawer head already use (the checker does not check type, this is the written record); 12.5, 14.5 and 11px removed from the CSS in favour of 13, 15 and 12. The error page and the latest empty state follow the States section (what happened, what to check, one action).
 - 2026-11-09: design round 1 (findings A and B): single-series charts (latest year bars, the year over year small multiples) draw their data in the accent; the chart is the page's primary content, so the accent on it is the one defended extra place (rubric Color 4), not decoration. The focused line in the all-countries chart is the same accent. The drawer stays at every width (Layout section updated).
 - 2026-11-09: design round 1: the 17 off-scale values moved to the nearest step (matrix cell 28, compact cell 24, burger 44 by 36, drawer close 36, chips 8px dots and 8px inline padding, breadcrumb offset 14); the drawer head is a fixed 64px (72 with a coarse pointer), both on the scale, so the sticky section offset equals it exactly (review fix after round 2; 56 was below the content height).

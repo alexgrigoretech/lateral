@@ -654,7 +654,7 @@
       "title": "Optional dashboard",
       "status": "met",
       "requirement": "Optional: an extra view, dashboard, or Power BI report. Not required.",
-      "summary": "This site. Next.js 16 with DuckDB querying the exported Parquet inside route handlers, seven pages and seven JSON routes, a country drilldown with lineage, and this walkthrough.",
+      "summary": "This site. Next.js 16 with DuckDB querying the exported Parquet inside route handlers, ten pages and eight JSON routes, a country drilldown with lineage, and this walkthrough.",
       "details": [
         "The dashboard never calls the World Bank API. Its data is the pipeline's export, committed next to the app, so the site and the CSV samples always agree.",
         "A health route reports the DuckDB version and the number of Parquet files, and the footer shows the pipeline run id."

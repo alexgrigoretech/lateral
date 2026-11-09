@@ -7,6 +7,8 @@ Countries: BRA, CAN, DEU, GBR, IND, JPN, MEX, USA, ZAF. Indicators: population (
 
 The dashboard under `dashboard/` reads the exported Parquet files through DuckDB inside Next.js route handlers. It is live at https://lateral.analyticslab.ro and its deployment is described in `dashboard/README.md`. The site also carries a brief walkthrough (https://lateral.analyticslab.ro/brief) that maps every requirement of the assessment to the code that meets it, with code samples, diagrams and the decision log. The repository is public at https://github.com/alexgrigoretech/lateral.
 
+The dashboard's `/playground` page runs API requests, provides curl, Python and Node snippets for the page's own origin, and checks Parquet download digests against the manifest.
+
 ## Run it
 
 Requirements: Python 3.11 and `make` (Git Bash on Windows works). Docker is an alternative.
