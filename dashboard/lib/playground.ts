@@ -1,4 +1,4 @@
-export type RouteId = "health" | "meta" | "completeness" | "yoy" | "latest" | "income-groups" | "country" | "export";
+export type RouteId = "health" | "meta" | "completeness" | "yoy" | "latest" | "income-groups" | "country" | "export" | "manifest";
 export type Param = "indicator" | "country" | "dataset" | "format";
 export type Language = "curl" | "python" | "node";
 export type ExportFormat = "csv" | "parquet";
@@ -13,6 +13,7 @@ export const ROUTES: readonly RouteDefinition[] = [
   { id: "income-groups", label: "Income groups", pattern: "/api/income-groups?indicator=", params: ["indicator"], returns: "Yearly income group statistics for one indicator, including sums, weighted averages, means, medians, ranges and counts, plus the countries in each group." },
   { id: "country", label: "Country", pattern: "/api/country/{iso3}", params: ["country"], returns: "One country's metadata, indicator facts, year over year changes and source page lineage with year ranges and source timestamps." },
   { id: "export", label: "Export", pattern: "/api/export/{dataset}?format=", params: ["dataset", "format", "indicator", "country"], returns: "CSV or Parquet for dim_country, dim_indicator, fct_indicator_year, rpt_completeness_by_country_indicator, rpt_missing_data, rpt_yoy_change, rpt_latest_year_comparison, rpt_latest_available_per_country, rpt_income_group_by_year or run_summary, with indicator and country filters only where the dataset has the column." },
+  { id: "manifest", label: "Manifest", pattern: "/api/export/manifest", params: [], returns: "The export manifest: every committed export file with its path, rows, bytes, SHA-256 digest and the run that produced it." },
 ];
 export const LANGUAGES: readonly { value: Language; label: string }[] = [
   { value: "curl", label: "curl" },
@@ -39,6 +40,7 @@ export function buildRequest(selection: Selection, origin: string, options: Play
   let path = `/api/${selection.route}`;
   const params = new URLSearchParams();
   if (selection.route === "country") path += `/${encodeURIComponent(selection.country)}`;
+  else if (selection.route === "manifest") path = "/api/export/manifest";
   else if (selection.route === "export") {
     path += `/${encodeURIComponent(selection.dataset)}`;
     params.set("format", selection.format);
@@ -54,8 +56,9 @@ export function buildRequest(selection: Selection, origin: string, options: Play
 export function snippet(language: Language, request: BuiltRequest, selection: Selection): string {
   const url = JSON.stringify(request.url);
   const isExport = selection.route === "export";
-  const filename = `${selection.dataset}.${selection.format}`;
-  if (language === "curl") return `curl ${url}${isExport ? ` -o ${filename}` : ""}`;
+  const params = isExport ? new URL(request.url).searchParams : new URLSearchParams();
+  const filename = [selection.dataset, params.get("indicator"), params.get("country"), selection.format].filter((part) => part !== null).join(".");
+  if (language === "curl") return `curl${isExport ? " --fail" : ""} ${url}${isExport ? ` -o ${filename}` : ""}`;
   if (language === "python") {
     if (isExport && selection.format === "parquet") return [
       "import urllib.request",
@@ -72,10 +75,12 @@ export function snippet(language: Language, request: BuiltRequest, selection: Se
   if (isExport && selection.format === "parquet") return [
     'import { writeFile } from "node:fs/promises";',
     `const res = await fetch(${url});`,
+    'if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);',
     `await writeFile(${JSON.stringify(filename)}, Buffer.from(await res.arrayBuffer()));`,
   ].join("\n");
   return [
     `const res = await fetch(${url});`,
+    ...(isExport ? ['if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);'] : []),
     `const data = await res.${isExport ? "text" : "json"}();`,
     "console.log(data);",
   ].join("\n");
@@ -97,6 +102,15 @@ function sizeLabel(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+const STATUS_TEXT: Record<number, string> = {
+  200: "OK",
+  400: "Bad Request",
+  404: "Not Found",
+  500: "Internal Server Error",
+  502: "Bad Gateway",
+  503: "Service Unavailable",
+};
+
 export async function runRequest(request: BuiltRequest, selection: Selection, options: PlaygroundOptions): Promise<RunResult> {
   const started = performance.now();
   try {
@@ -105,12 +119,17 @@ export async function runRequest(request: BuiltRequest, selection: Selection, op
     const elapsedMs = Math.round(performance.now() - started);
     const contentType = (response.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
     const result: RunResult = {
-      ok: response.ok, status: response.status, statusText: response.statusText, contentType, elapsedMs, sizeLabel: sizeLabel(buffer.byteLength),
+      ok: response.ok, status: response.status, statusText: response.statusText || STATUS_TEXT[response.status] || "", contentType, elapsedMs, sizeLabel: sizeLabel(buffer.byteLength),
       kind: "text", body: "", truncatedNote: null, digest: null, manifest: "none", manifestLabel: "No manifest entry",
     };
-    if (contentType === "application/vnd.apache.parquet" || contentType === "application/x-parquet") {
+    if (contentType === "application/vnd.apache.parquet" || contentType === "application/x-parquet" || (contentType === "application/octet-stream" && new TextDecoder().decode(buffer.slice(0, 4)) === "PAR1")) {
       result.kind = "parquet";
-      const hash = await crypto.subtle.digest("SHA-256", buffer);
+      const subtle = globalThis.crypto?.subtle;
+      if (!subtle) {
+        result.manifestLabel = "Digest unavailable outside a secure context";
+        return result;
+      }
+      const hash = await subtle.digest("SHA-256", buffer);
       result.digest = Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, "0")).join("");
       const params = new URL(request.url).searchParams;
       if (params.has("indicator") || params.has("country")) {

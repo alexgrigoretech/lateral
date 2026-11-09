@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Playground } from "@/components/playground";
-import { playgroundOptions, ROUTES } from "@/lib/playground-server";
+import { ROUTES } from "@/lib/playground";
+import { playgroundOptions } from "@/lib/playground-server";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Try the API" };

@@ -1211,6 +1211,9 @@ body[data-drawer-open="true"] { overflow: hidden; }
 .console__facts dd { margin: 0; overflow-wrap: anywhere; }
 .console__facts .hash { font-size: 13px; }
 .routes-table td:nth-child(2) { white-space: nowrap; }
+@media (pointer: coarse) {
+  .button--primary, .select { min-height: 44px; }
+}
 @media (max-width: 640px) {
   .console { padding: 14px 14px 16px; }
   .console__snippet { margin: 0 -14px; }

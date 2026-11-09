@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useSyncExternalStore, type KeyboardEvent } from "react";
+import { useId, useRef, useState, useSyncExternalStore, type KeyboardEvent } from "react";
 import { CopyButton } from "@/components/copy-button";
 import { buildRequest, DEFAULT_ORIGIN, FORMAT_OPTIONS, LANGUAGES, ROUTES, runRequest, snippet, type Language, type PlaygroundOptions, type RunResult, type Selection } from "@/lib/playground";
 
@@ -37,13 +37,17 @@ export function Playground({ options }: { options: PlaygroundOptions }) {
   const [running, setRunning] = useState(false);
   const [message, setMessage] = useState("");
   const selectId = useId();
+  const runId = useRef(0);
 
   const route = ROUTES.find((item) => item.id === selection.route) ?? ROUTES[0];
   const request = buildRequest(selection, origin, options);
   const code = snippet(language, request, selection);
+  const ready = route.params.every((param) => param === "format" || param === "dataset" ? Boolean(selection[param]) : route.id === "export" || Boolean(selection[param]));
 
   const allOption = { value: "", label: "All" };
   function update(patch: Partial<Selection>) {
+    runId.current += 1;
+    setRunning(false);
     setSelection((current) => {
       const next = { ...current, ...patch };
       if (next.route === "export") {
@@ -57,12 +61,20 @@ export function Playground({ options }: { options: PlaygroundOptions }) {
     setResult(null);
   }
   async function run() {
+    const id = ++runId.current;
     setRunning(true);
     setMessage("Running the request");
-    const next = await runRequest(request, selection, options);
-    setResult(next);
-    setRunning(false);
-    setMessage(`Response ${next.status} ${next.statusText}`);
+    try {
+      const next = await runRequest(request, selection, options);
+      if (id !== runId.current) return;
+      setResult(next);
+      setMessage(`Response ${next.status} ${next.statusText}`);
+    } catch (error) {
+      if (id !== runId.current) return;
+      setMessage(`The request could not be run: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      if (id === runId.current) setRunning(false);
+    }
   }
 
   return <>
@@ -82,15 +94,15 @@ export function Playground({ options }: { options: PlaygroundOptions }) {
     <section className="console" aria-labelledby="request-title">
       <div className="console__head">
         <h2 className="console__title" id="request-title"><span className="console__method">GET</span> <code className="console__path">{request.path}</code></h2>
-        <button type="button" className="button button--primary" onClick={run} disabled={running}>{running ? "Running" : "Run"}</button>
+        <button type="button" className="button button--primary" onClick={run} disabled={running || !ready}>{running ? "Running" : "Run"}</button>
       </div>
       <div className="console__tabs">
         <Segmented label="Language" value={language} options={LANGUAGES} onChange={(next) => setLanguage(next as Language)} compact />
-        <CopyButton value={code} label="snippet" />
+        <CopyButton key={code} value={code} label="snippet" />
       </div>
       <pre className="code-sample__pre console__snippet" tabIndex={0} role="region" aria-label={`Request in ${LANGUAGES.find((item) => item.value === language)?.label ?? language}`}><code>{code}</code></pre>
       <div className="console__response">
-        <div className="console__meta" aria-live="polite">
+        <div className="console__meta">
           <span className="console__label">Response</span>
           {result ? <>
             <span className={`status-word ${result.ok ? "status-word--ok" : "status-word--warn"}`}>{result.status} {result.statusText}</span>

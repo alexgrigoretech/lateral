@@ -3,8 +3,6 @@ import { readManifest } from "@/lib/export";
 import { getMeta } from "@/lib/queries";
 import type { PlaygroundOptions } from "@/lib/playground";
 
-export { ROUTES } from "@/lib/playground";
-
 export async function playgroundOptions(): Promise<PlaygroundOptions> {
   const [meta, manifest] = await Promise.all([getMeta(), readManifest()]);
   return {
