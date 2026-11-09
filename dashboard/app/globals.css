@@ -1133,3 +1133,89 @@ body[data-drawer-open="true"] { overflow: hidden; }
 /* export catalogue: the filters column keeps one size whether or not a cell is muted */
 .export-datasets .status-word { font-size: inherit; }
 /* .button (error page) shares the copy button recipe above */
+
+/* API playground (2026-11-09, design skill build, direction A "one console"): the response frame is the bold element of the page */
+:root { --font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.control--inline { flex-direction: row; align-items: center; gap: 10px; }
+.segmented--compact { padding: 2px; border-radius: 6px; }
+.segmented--compact .segmented__option { padding: 4px 10px; font-size: 13px; }
+.select {
+  appearance: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  padding: 6px 32px 6px 12px;
+  min-height: 36px;
+  max-width: 100%;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink-2) 50%), linear-gradient(135deg, var(--ink-2) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+.select:hover { border-color: var(--ink-3); }
+.button--primary { background: var(--ink); color: var(--page); border-color: var(--ink); font-weight: 500; padding: 6px 16px; min-height: 36px; font-size: 14px; }
+.button--primary:hover { background: var(--ink-2); border-color: var(--ink-2); color: var(--page); }
+.button--primary:disabled { background: var(--ink-3); border-color: var(--ink-3); cursor: progress; }
+
+.console {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px 18px;
+  min-width: 0;
+}
+.console__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.console__title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px; font-size: 15px; font-weight: 500; min-width: 0; }
+.console__method { font-family: var(--font-display); font-weight: 600; font-size: 13px; letter-spacing: 0.02em; color: var(--ink-3); }
+.console__path { font-family: var(--font-mono); font-size: 14px; background: transparent; padding: 0; color: var(--ink); overflow-wrap: anywhere; }
+.console__tabs { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.console__snippet { margin: 0 -18px; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); border-radius: 0; font-family: var(--font-mono); white-space: pre; }
+.console__response { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+.console__meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.console__label { font-weight: 600; color: var(--ink); }
+.console__meta .status-word { font-size: 14px; font-weight: 500; }
+.console__body {
+  margin: 0;
+  min-height: 240px;
+  max-height: 480px;
+  overflow: auto;
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  background: var(--page);
+  font-family: var(--font-mono);
+}
+.console__placeholder {
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  border: 1px dashed var(--rule);
+  border-radius: 6px;
+  color: var(--ink-2);
+  max-width: none;
+}
+.console__note { font-size: 13px; color: var(--ink-3); }
+.console__facts { margin: 0; display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 8px 16px; padding: 16px 18px; border: 1px solid var(--hairline); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; background: var(--page); font-size: 14px; }
+.console__facts > div { display: contents; }
+.console__facts dt { color: var(--ink-3); font-weight: 500; }
+.console__facts dd { margin: 0; overflow-wrap: anywhere; }
+.console__facts .hash { font-size: 13px; }
+.routes-table td:nth-child(2) { white-space: nowrap; }
+@media (max-width: 640px) {
+  .console { padding: 14px 14px 16px; }
+  .console__snippet { margin: 0 -14px; }
+  .console__body, .console__placeholder { min-height: 180px; }
+  .console__facts { grid-template-columns: 1fr; gap: 4px; }
+  .segmented--compact { display: inline-flex; width: auto; }
+  .button--primary { width: 100%; }
+}
