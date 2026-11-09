@@ -78,7 +78,10 @@ type:
     sm: 13
     md: 14
     base: 15
+    md-plus: 16
     lg: 17
+    lg-plus: 18
+    xl-minus: 20
     xl: 22
     2xl: 26
     3xl: 34
@@ -154,6 +157,7 @@ Plain reporting voice, addressed to you, the reader checking the pipeline. The c
 
 ## Decisions
 
+- 2026-11-09: design round 2: 16, 18 and 20 added to the type scale as the sizes the lede, the empty state title and the drawer head already use (the checker does not check type, this is the written record); 12.5 and 11px removed from the CSS in favour of 13 and 12. The error page and the latest empty state follow the States section (what happened, what to check, one action).
 - 2026-11-09: design round 1 (findings A and B): single-series charts (latest year bars, the year over year small multiples) draw their data in the accent; the chart is the page's primary content, so the accent on it is the one defended extra place (rubric Color 4), not decoration. The focused line in the all-countries chart is the same accent. The drawer stays at every width (Layout section updated).
 - 2026-11-09: design round 1: the 17 off-scale values moved to the nearest step (matrix cell 28, compact cell 24, burger 44 by 36, drawer close 36, chips 8px dots and 8px inline padding, breadcrumb offset 14); 56 added to the spacing scale as the drawer head height (the sticky section offset must equal it).
 - 2026-11-09: DESIGN.md created from the existing dashboard/app/globals.css tokens during the design skill review, without changing any value. The spacing scale is written as the rhythm the CSS already uses (base unit 2, steps 3 to 64) rather than the template's 4-based scale; off-scale values the checker still reports are component sizes (cell 26px, burger 40px, legend swatches) and are listed in the review findings. Shadows are none by decision except the drawer. The hover transition is 0ms by decision: hovers change color and underline thickness instantly. The print rule color #999 is a print-only token.
