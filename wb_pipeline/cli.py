@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .client import utc_now
 from .config import Config, load_config
-from .export import export
+from .export import check_manifest, export, write_manifest
 from .raw import finish_run, ingest, start_run
 from .transform import transform
 
@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s run_id=%(run_id)s %(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="World Bank indicators pipeline")
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("run", "ingest", "transform", "export"):
+    for name in ("run", "ingest", "transform", "export", "manifest"):
         sub = commands.add_parser(name)
         sub.add_argument("--config", type=Path, default=Path("config/pipeline.yaml"))
         sub.add_argument("--duckdb-path", type=Path)
@@ -53,6 +53,8 @@ def main(argv: list[str] | None = None) -> int:
             sub.add_argument("--skip-dbt", action="store_true")
         if name == "transform":
             sub.add_argument("--docs", action="store_true")
+        if name == "manifest":
+            sub.add_argument("--check", action="store_true")
     args = parser.parse_args(argv)
     try:
         config = load_config(args.config)
@@ -68,6 +70,18 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "transform":
             transform(config, "transform", args.docs)
             summary = {"command": "docs" if args.docs else "transform", "status": "success"}
+        elif args.command == "manifest":
+            if args.check:
+                problems = check_manifest(config)
+                summary = {"command": "manifest-check", "problems": problems,
+                           "status": "mismatch" if problems else "ok"}
+                print(json.dumps(summary, sort_keys=True))
+                return 1 if problems else 0
+            with (config.paths.csv_dir / "run_summary.json").open(encoding="utf-8") as stream:
+                run = json.load(stream)
+            run_id = run["run_id"]
+            manifest = write_manifest(config, run_id, run["exported_at"])
+            summary = {"command": "manifest", "files": len(manifest["files"]), "run_id": run_id}
         else:
             summary = export(config)
         print(json.dumps(summary, sort_keys=True))

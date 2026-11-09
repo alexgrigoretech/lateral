@@ -203,7 +203,7 @@
         {
           "file": "wb_pipeline/cli.py",
           "start": 44,
-          "end": 56,
+          "end": 58,
           "lang": "python",
           "caption": "CLI subcommands and the path overrides used by the offline demo."
         }
@@ -889,8 +889,8 @@
       "snippets": [
         {
           "file": "wb_pipeline/export.py",
-          "start": 26,
-          "end": 57,
+          "start": 148,
+          "end": 179,
           "lang": "python",
           "caption": "Export writes Parquet, CSV and the run summary."
         }
@@ -925,7 +925,7 @@
         {
           "file": "wb_pipeline/cli.py",
           "start": 44,
-          "end": 56,
+          "end": 58,
           "lang": "python",
           "caption": "The offline-fixtures and path overrides used for replay."
         }
@@ -1043,8 +1043,8 @@
       "snippets": [
         {
           "file": "wb_pipeline/export.py",
-          "start": 26,
-          "end": 40,
+          "start": 148,
+          "end": 162,
           "lang": "python",
           "caption": "Which relations are exported."
         }

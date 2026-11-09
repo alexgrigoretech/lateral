@@ -77,9 +77,15 @@ export async function query<T>(sql: string, params: unknown[] = []): Promise<T[]
   return result;
 }
 
+function enqueue<T>(db: Database, work: () => Promise<T>): Promise<T> {
+  const result = db.queue.then(work);
+  db.queue = result.catch(() => undefined);
+  return result;
+}
+
 async function runQuery<T>(sql: string, params: unknown[]): Promise<T[]> {
   const db = await database();
-  const result = db.queue.then(async () => {
+  return enqueue(db, async () => {
     const statement = await db.connection.prepare(sql);
     try {
       for (const [index, value] of params.entries()) {
@@ -99,6 +105,11 @@ async function runQuery<T>(sql: string, params: unknown[]): Promise<T[]> {
       statement.destroySync();
     }
   });
-  db.queue = result.catch(() => undefined);
-  return result;
+}
+
+export async function execute(sql: string): Promise<void> {
+  const db = await database();
+  return enqueue(db, async () => {
+    await db.connection.run(sql);
+  });
 }

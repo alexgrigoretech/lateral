@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+        env:
+          WB_OFFLINE_GUARD: "1"
+      - run: python -m wb_pipeline run --offline-fixtures tests/fixtures/live_2026-11-08 --duckdb-path /tmp/wb.duckdb --export-dir /tmp/wb-out
+        env:
+          WB_OFFLINE_GUARD: "1"
+      - run: python -m wb_pipeline manifest --check --duckdb-path /tmp/wb.duckdb --export-dir /tmp/wb-out
+      - run: |
+          printf x >> /tmp/wb-out/outputs/rpt_yoy_change.csv
+          if python -m wb_pipeline manifest --check --duckdb-path /tmp/wb.duckdb --export-dir /tmp/wb-out; then
+            echo "checker missed a corrupted file"
+            exit 1
+          fi
+      - run: python -m wb_pipeline manifest --check
+
+  dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: |
+          PORT=3011 npm run start > /tmp/next.log 2>&1 &
+          echo $! > /tmp/next.pid
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:3011/api/health; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/next.log
+          exit 1
+      - run: BASE_URL=http://127.0.0.1:3011 npm run smoke
+      - if: always()
+        run: |
+          if [ -f /tmp/next.pid ]; then
+            kill "$(cat /tmp/next.pid)" || true
+          fi
+
+  secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

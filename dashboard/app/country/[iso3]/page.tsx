@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ValueChart } from "@/components/charts";
 import { CopyButton } from "@/components/copy-button";
+import { ExportLinks } from "@/components/export-links";
 import { YoyTable } from "@/components/tables";
 import { countryLabel, sourceDate, utc, year } from "@/lib/format";
 import { getCountry, getMeta } from "@/lib/queries";
@@ -26,6 +27,7 @@ export default async function CountryPage({ params }: Props) {
   const next = meta.countries[index + 1];
   return <div className="page">
     <header><Link href="/latest" className="page__back">Latest comparable year</Link><h1 className="page__title">{countryLabel(data.country)}</h1><p className="page__lede">{data.country.income_level_name} · {data.country.region_name} · Capital: {data.country.capital_city || "Not available"}</p></header>
+    <ExportLinks items={[{ dataset: "fct_indicator_year", label: `Indicator values (${data.country.country_name})`, filters: { country: iso3 } }, { dataset: "rpt_yoy_change", label: `Year over year change (${data.country.country_name})`, filters: { country: iso3 } }]} />
     <section className="section" aria-labelledby="values-title"><h2 className="section__title" id="values-title">Indicators over time</h2><p className="section__note">Each chart uses the indicator&apos;s own scale. A dot marks the latest year when its value is present.</p><div className="country-charts">{meta.indicators.map((indicator) => <ValueChart key={indicator.indicator_code} metric="value" indicator={indicator} title={indicator.label} rows={data.facts.filter((row) => row.indicator_code === indicator.indicator_code)} />)}</div></section>
     <section className="section" aria-labelledby="yoy-title"><h2 className="section__title" id="yoy-title">Year over year changes</h2><YoyTable rows={data.yoy} showCountry={false} className="data-table data-table--static-head" /></section>
     <section className="section" aria-labelledby="lineage-title"><h2 className="section__title" id="lineage-title">Source lineage</h2><p className="section__note">Every value on this page traces to a stored API response identified by its page id. The request link reproduces the equivalent call against the live API, not the stored response.</p>

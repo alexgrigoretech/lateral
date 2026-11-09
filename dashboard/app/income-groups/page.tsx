@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { IncomeChart } from "@/components/charts";
+import { ExportLinks } from "@/components/export-links";
 import { Selector } from "@/components/selectors";
 import { selectedIndicator, selectedStatistic, statisticOptions, STATISTICS, type SearchParams } from "@/lib/page-params";
 import { getIncomeGroups, getMeta } from "@/lib/queries";
@@ -21,6 +22,7 @@ export default async function IncomeGroups({ searchParams }: { searchParams: Sea
       <Selector label="Indicator" parameter="indicator" value={indicator.indicator_code} options={meta.indicators.map((item) => ({ value: item.indicator_code, label: item.label }))} />
       <Selector label="Statistic" parameter="stat" value={statistic} options={statisticOptions(indicator)} />
     </div>
+    <ExportLinks items={[{ dataset: "rpt_income_group_by_year", label: `Income groups by year (${indicator.label})`, filters: { indicator: indicator.indicator_code } }]} />
     <section className="section"><p className="section__note">These groups describe only the selected countries, not global income group totals.</p><IncomeChart rows={data.rows} indicator={indicator} statistic={statistic} statisticLabel={statisticLabel} /><details><summary>How the statistics are calculated</summary><p>Use sums for population and GDP totals. Use population weighted averages for GDP per capita and life expectancy. Average and median describe the countries in the sample without weighting by population. Missing values remain missing; the table reports how many countries have values. These groups do not represent global income group totals.</p></details></section>
     <section className="section" aria-labelledby="members-title"><h2 className="section__title" id="members-title">Countries in each group</h2><div className="card-grid">{INCOME_ORDER.map((code) => {
       const members = data.members.filter((country) => country.income_level_code === code);
